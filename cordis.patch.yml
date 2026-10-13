@@ -28,7 +28,11 @@
   config:
     includeHarnessIdentity: false
     personaPrefix: ""
-    personaSuffix: Your working directory is {{cwd}}.
+    # {{cwd}} 在较老 harness（如 dsh 0.2.1-alpha.2）未注册变量，配置模板层也会炸。
+    # 工作目录后缀改由运行时 overlayOfficialIdentity 兜底注入：
+    # 检测到 cwd 变量已注册时用 "Your working directory is {{cwd}}."，
+    # 未注册时回退为不含变量的静态句，保证装完即用。
+    personaSuffix: ""
 
 - id: dsh-purge
   inject: [systemPrompt, tools]
