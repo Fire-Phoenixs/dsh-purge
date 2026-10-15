@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+  # 手动重发入口：workflow 刚启用、或上次推送在启用之前时，不必再造一个空提交。
+  workflow_dispatch:
 
 permissions:
   contents: write
