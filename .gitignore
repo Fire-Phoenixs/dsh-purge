@@ -11,6 +11,8 @@ docs/agents/
 
 # 本地草稿，不进仓库
 scripts/tmp-*.mjs
+# 说明：scripts/test-*.mjs 曾用于本机草稿，已被忽略规则覆盖。
+# 正式的回归测试放在 tests/（受版本控制，随包分发，供用户复核）。
 scripts/test-*.mjs
 .scratch/
 dsh-redteam-mode-main/

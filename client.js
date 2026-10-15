@@ -195,6 +195,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"table.patch": "项目",
 			"table.status": "状态",
 			"status.applied": "已应用",
+			"status.partial": "部分写入（有文件失败）",
 			"status.off": "已关闭",
 			"status.pending": "待应用",
 			"status.unmatched": "没对上",
@@ -537,6 +538,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"table.patch": "Item",
 			"table.status": "Status",
 			"status.applied": "Applied",
+			"status.partial": "Partly written (some files failed)",
 			"status.off": "Off",
 			"status.pending": "Pending",
 			"status.unmatched": "No match",
@@ -1061,11 +1063,14 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			if (st === "unmatched") return "bad";
 			if (st === "na") return "ok";
 			if (st === "missing_file" || st === "skipped" || st === "unlocated" || st === "off") return "miss";
+			// partially_applied：部分目标写成功、部分失败。不是成功，按失败显示。
+			if (st === "partially_applied") return "bad";
 			return "bad";
 		}
 
 		function statusLabel(st, t) {
 			if (st === "applied" || st === "already") return t("status.applied");
+			if (st === "partially_applied") return t("status.partial");
 			if (st === "off") return t("status.skipped");
 			if (st === "pending") return t("status.pending");
 			if (st === "unmatched") return t("status.unmatched");

@@ -35,7 +35,7 @@
 >
 > 写进 profile 还不会改宿主。点会话标题旁的 **dsh-purge** → **清洗** → **应用**。成功会自动重启；补丁没打完不重启。重启后新开一轮对话，注入才进当前会话。
 >
-> Node.js **≥18**。Windows 无闪窗需要 **Node ≥22**。插件市场一键安装和下面的命令都走 npm 包 `dsh-purge`。
+> Node.js **≥18**。Windows 无闪窗需要 **Node ≥22**。npm registry 上没有 `dsh-purge` 包，安装请用下面的 tarball 直链或手动安装。
 
 ## 目录
 
@@ -181,21 +181,23 @@ node scripts/check-anchors.mjs 0.2.0-rc.2 0.2.1-alpha.3
 
 现在只维护官方 `dsh web` 和官方桌面 EXE，**两边都要装、分开应用**。Web 的包进不了桌面端，桌面端的包也进不了 Web。
 
+> **安装源说明。** npm registry 上**没有** `dsh-purge` 这个包（`registry.npmjs.org/dsh-purge` 返回 404）——它登记在原作者的插件目录里但从未发布到 npm。所以首选命令用本续作仓库的 tarball 直链，而不是裸包名。
+
 **Web（官方 `dsh web`）**
 
 ```sh
-dsh plugin --profile web add dsh-purge
+dsh plugin --profile web add https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz
 ```
 
 **桌面端（官方 EXE）**
 
 ```sh
-dsh plugin --profile desktop add dsh-purge
+dsh plugin --profile desktop add https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz
 ```
 
-当前目录已经是本仓库时，把包名换成 `add .`。`dsh` 不在 PATH 时走 [手动安装](#manual)。registry 上不去：同一个 `--profile`，把目标换成 `https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz`。
+已把本仓库 clone 到本地时，把 `add` 的目标换成该目录（`add .`）。`dsh` 不在 PATH 时走 [手动安装](#manual)。
 
-npm registry 与插件市场都在原作者名下登记，因此**推荐直接用下面的 `dsh://` 按钮或手动安装**，指向本续作仓库。
+npm registry 与插件市场都在原作者名下登记，因此**推荐直接用下面的 `dsh://` 按钮或上面的 tarball 命令**，都指向本续作仓库。
 
 桌面客户端也可以点按钮（`dsh://` 唤起）：
 
@@ -230,18 +232,18 @@ Web 的控件只动 Web，桌面端的只动桌面应用。不要在一个宿主
 
 安装 DeepSeek Harness 插件 `dsh-purge`，Web 和官方桌面端都要装。不要全盘搜索，不要读或改其它文件，不要应用设置，也不要重启应用。
 
-`dsh` 不在 PATH 就告诉用户后停止。当前目录已是本仓库时，把下面两条里的包名都换成 `.`。npm registry 上不去，把包名换成 `https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz`。某个 profile 不存在就跳过那一条，另一条照装。
+`dsh` 不在 PATH 就告诉用户后停止。某个 profile 不存在就跳过那一条，另一条照装。下面两条都用本续作仓库的 tarball 直链（npm 上没有 `dsh-purge` 包，用裸包名会装不上）。已把本仓库 clone 到本地时，把目标换成该目录（`.`）。
 
 **Web 端（官方 `dsh web`）**
 
 ```sh
-dsh plugin --profile web add dsh-purge
+dsh plugin --profile web add https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz
 ```
 
 **桌面端（官方 EXE）**
 
 ```sh
-dsh plugin --profile desktop add dsh-purge
+dsh plugin --profile desktop add https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz
 ```
 
 命令结束后，提醒用户：Web 完全退出并重启 `dsh web`；桌面端退出托盘再打开 EXE。各自点会话标题旁的 **dsh-purge**，在「清洗」里点「应用」。然后停止。
@@ -596,7 +598,7 @@ flowchart LR
 - 改动范围是本机 `@deepseek-ai/*` 包里的渲染文案、默认策略和执行逻辑，以及用户目录下的覆盖文件与规则集。
 - 升级后原文对不上会显示跳过，这次应用仍算完成，不会乱改。
 - 不改动非 `@deepseek-ai` 的第三方插件源仓库（启动时的 CMD 无感会**尽力**修补已装的 doctor / market / 梁神 / mnemon，属运行时补丁）。
-- 安装走 npm 包名 `dsh-purge`：`dsh plugin --profile web add dsh-purge` 或 `dsh plugin --profile desktop add dsh-purge`。当前目录已是本仓库时 `add .`。registry 上不去再加 master.tar.gz。插件市场一键安装走同一个 npm 包。
+- 安装走本仓库的 tarball 直链：`dsh plugin --profile web add https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz`（桌面端把 `web` 换成 `desktop`）。**不要用裸包名 `dsh-purge`** —— npm registry 上没有这个包，装了会拉不到；插件目录里那一项登记在原作者名下、且没有发布的 npm 版本。仓库已在本地时 `add .`。
 
 ---
 

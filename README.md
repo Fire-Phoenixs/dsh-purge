@@ -35,7 +35,7 @@
 >
 > Adding the plugin to a profile does not patch the host. Click **dsh-purge** beside the session title → **Clean** → **Apply**. A successful Apply restarts; an unfinished Apply does not. After the restart, start a new chat — that is when the inject enters the session.
 >
-> Node.js **≥18**. Windows no-flash needs **Node ≥22**. Hub one-click and the commands below both install the npm package `dsh-purge`.
+> Node.js **≥18**. Windows no-flash needs **Node ≥22**. There is no `dsh-purge` package on npm; install with the tarball URLs below or a manual install.
 
 ## Contents
 
@@ -181,21 +181,23 @@ node scripts/check-anchors.mjs 0.2.0-rc.2 0.2.1-alpha.3
 
 Web and the official desktop EXE are the two maintained hosts. **Install both. Apply each separately.** A Web install does not reach the desktop app, and a desktop install does not reach Web.
 
+> **About the install source.** There is **no** `dsh-purge` package on the npm registry (`registry.npmjs.org/dsh-purge` returns 404) — it is listed in the original author's plugin catalog but was never published to npm. So the commands below use this continuation repository's tarball URL instead of the bare package name.
+
 **Web (official `dsh web`)**
 
 ```sh
-dsh plugin --profile web add dsh-purge
+dsh plugin --profile web add https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz
 ```
 
 **Desktop (official EXE)**
 
 ```sh
-dsh plugin --profile desktop add dsh-purge
+dsh plugin --profile desktop add https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz
 ```
 
-If this directory is already a clone, use `add .` instead of the package name. If `dsh` is not on PATH, use [Manual install](#manual). Registry blocked: add `https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz` with the same `--profile`.
+If this repository is already cloned locally, point `add` at that directory (`add .`). If `dsh` is not on PATH, use [Manual install](#manual).
 
-Both npm and the plugin hub are registered under the original author's name, so prefer the `dsh://` button below or a manual install — both point at this continuation repository.
+Both npm and the plugin hub are registered under the original author's name, so prefer the `dsh://` button below or the tarball commands above — they point at this continuation repository.
 
 For the desktop client you can also click the button (`dsh://` deep link):
 
@@ -230,18 +232,18 @@ Paste the block below to a local assistant. It should only run the install comma
 
 Install the DeepSeek Harness plugin `dsh-purge` into both the Web profile and the official desktop profile. Do not scan the whole disk, do not read or edit other files, do not apply settings, and do not restart the app.
 
-If `dsh` is not on PATH, tell the user and stop. If this directory is already a clone, use `.` instead of the package name in both commands. If the npm registry is blocked, use `https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz`. If one profile is missing, skip that command and still install the other.
+If `dsh` is not on PATH, tell the user and stop. If one profile is missing, skip that command and still install the other. Both commands below use this continuation repository's tarball URL — there is no `dsh-purge` package on npm, so the bare package name cannot be installed. If the repository is already cloned locally, use that directory (`.`) instead.
 
 **Web (official `dsh web`)**
 
 ```sh
-dsh plugin --profile web add dsh-purge
+dsh plugin --profile web add https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz
 ```
 
 **Desktop (official EXE)**
 
 ```sh
-dsh plugin --profile desktop add dsh-purge
+dsh plugin --profile desktop add https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz
 ```
 
 After the commands finish, tell the user to fully quit and restart `dsh web`, and to quit the desktop tray then reopen the EXE. On each host, open **dsh-purge** beside the session title and **Apply** on **Clean**. Then stop.
@@ -587,7 +589,7 @@ What changed, and the zip, are on this repository's [Releases](https://github.co
 - Scope is rendered copy, defaults, and runtime logic inside local `@deepseek-ai/*` packages, plus override files and rule sets under the harness home.
 - After an upgrade, unmatched originals show as skipped. Apply still completes, and those files are left unchanged.
 - Third-party plugin *source repos* outside `@deepseek-ai` are left alone (CMD silence may **best-effort** patch installed doctor / market / liangshen / mnemon at runtime).
-- Install the npm package `dsh-purge`: `dsh plugin --profile web add dsh-purge` or `dsh plugin --profile desktop add dsh-purge`. From this repo, `add .`. If the registry is blocked, add the master.tar.gz URL instead. Hub one-click uses the same npm package.
+- Install from this repository's tarball: `dsh plugin --profile web add https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz` (use `desktop` for the desktop profile). **Do not use the bare package name `dsh-purge`** — there is no such package on the npm registry, and the catalog entry is registered under the original author's name with no published npm version. From a local clone, `add .`.
 
 ---
 
