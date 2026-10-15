@@ -25,12 +25,28 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Syntax-check plugin entry
+      - name: Syntax-check every JS/MJS file
         run: |
-          node --check lib/index.js
-          node --check lib/core.js
-          node --check lib/reapply.js
-          node --input-type=module -e "import './lib/index.js'"
+          # 全量语法检查：不只入口三个文件 —— 改动 update.js / redteam / client.js
+          # 曾绕过了原来的检查。
+          fail=0
+          while IFS= read -r f; do
+            node --check "$f" || fail=1
+          done < <(find lib scripts tests bin -type f \( -name '*.js' -o -name '*.mjs' \))
+          node --check client.js || fail=1
+          exit $fail
+
+      - name: Load plugin entry
+        run: node --input-type=module -e "import './lib/index.js'"
+
+      - name: Regression tests
+        run: node scripts/run-tests.mjs
+
+      - name: Anchor health check (non-blocking)
+        # 拉官方包对比锚点。网络不通或关键目标消失会退出 3，此时只警告不挡发版 ——
+        # 发版不该被外部网络状况卡住；真正的锚点缺口由维护者按输出处理。
+        continue-on-error: true
+        run: node scripts/check-anchors.mjs
 
       - name: Publish GitHub Release
         env:

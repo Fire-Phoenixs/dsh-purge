@@ -14,6 +14,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import zlib from "node:zlib";
 import assert from "node:assert/strict";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -30,17 +31,90 @@ const t = (name, fn) => {
 console.log("\n=== P2-4 锚点体检不得漏报 ===\n");
 
 // ── 1. tgz 解析器：自带实现必须真能解出文件 ──
-t("readTarGz 能解出 npm 包的 package.json（不依赖外部 tar）", () => {
-  // 用本机已缓存的官方包做真实样本；没有就跳过（不联网）。
-  const cached = path.join(ROOT, ".scratch", "clean", "0.2.1-alpha.3", "dsh-system-prompt", "package", "package.json");
-  const tgz = path.join(ROOT, ".scratch", "clean", "0.2.1-alpha.3", "dsh-system-prompt", "pkg.tgz");
-  if (!fs.existsSync(tgz)) return;   // 无样本时跳过
-  const files = chk.readTarGz(fs.readFileSync(tgz));
-  assert.ok(files.length > 0, "应解出文件");
-  const hit = files.find((f) => f.path.endsWith("package/package.json"));
-  assert.ok(hit, "应包含 package/package.json");
-  const parsed = JSON.parse(hit.data.toString("utf8"));
+// 自造 tgz（不依赖本机缓存样本，CI 里也能真跑；否则会空跑成假通过）。
+
+/** 造一个 ustar 头。 */
+function tarHeader(name, size, type = "0") {
+  const buf = Buffer.alloc(512);
+  buf.write(name, 0, 100, "utf8");
+  buf.write("0000644\0", 100, 8, "ascii");
+  buf.write("0000000\0", 108, 8, "ascii");
+  buf.write("0000000\0", 116, 8, "ascii");
+  buf.write(size.toString(8).padStart(11, "0") + "\0", 124, 12, "ascii");
+  buf.write("00000000000\0", 136, 12, "ascii");
+  buf.write("        ", 148, 8, "ascii");       // 校验和先占位（空格）
+  buf.write(type, 156, 1, "ascii");
+  buf.write("ustar\0", 257, 6, "ascii");
+  buf.write("00", 263, 2, "ascii");
+  let sum = 0;
+  for (const b of buf) sum += b;
+  buf.write(sum.toString(8).padStart(6, "0") + "\0 ", 148, 8, "ascii");
+  return buf;
+}
+
+/** files: [path, content] 或 [path, content, type]（type 'x' = pax 扩展头）。 */
+function buildTgz(files) {
+  const chunks = [];
+  for (const [name, content, type] of files) {
+    const data = Buffer.from(content, "utf8");
+    chunks.push(tarHeader(name, data.length, type), data);
+    const pad = (512 - (data.length % 512)) % 512;
+    if (pad) chunks.push(Buffer.alloc(pad));
+  }
+  chunks.push(Buffer.alloc(1024));   // 两个全零块收尾
+  return zlib.gzipSync(Buffer.concat(chunks));
+}
+
+t("readTarGz 能解出自造 tgz 的 package.json（自带解析，不依赖外部 tar）", () => {
+  const manifest = JSON.stringify({ name: "@deepseek-ai/dsh-system-prompt", version: "0.2.1-alpha.3" });
+  const tgz = buildTgz([["package/package.json", manifest]]);
+  const files = chk.readTarGz(tgz);
+  assert.equal(files.length, 1, "应解出 1 个文件");
+  assert.equal(files[0].path, "package/package.json");
+  const parsed = JSON.parse(files[0].data.toString("utf8"));
   assert.equal(parsed.name, "@deepseek-ai/dsh-system-prompt");
+});
+
+t("readTarGz 能处理多文件与 512 字节对齐（含跨块内容）", () => {
+  const big = "x".repeat(1000);      // 跨两个块
+  const tgz = buildTgz([
+    ["package/a.js", "AAA"],
+    ["package/deep/b.js", big],
+    ["package/c.js", "CCC"],
+  ]);
+  const files = chk.readTarGz(tgz);
+  assert.equal(files.length, 3, "三个文件都要解出来");
+  assert.equal(files[0].data.toString("utf8"), "AAA");
+  assert.equal(files[1].data.toString("utf8"), big, "跨块内容不能截断");
+  assert.equal(files[2].data.toString("utf8"), "CCC");
+});
+
+t("readTarGz 能读 pax 扩展头的 path 覆盖（长路径场景）", () => {
+  const longPath = "package/" + "very-long-dir/".repeat(12) + "file.js";
+  // pax 记录格式： "<十进制长度><空格>path=<值>\n"，长度含自身。
+  // 注意 body 自己已以空格开头，前缀后不能再补空格（否则成了两个空格，格式非法）。
+  const body = ` path=${longPath}\n`;
+  const paxBody = `${body.length + String(body.length).length}${body}`;
+  const tgz = buildTgz([
+    ["PaxHeaders/x", paxBody, "x"],
+    ["package/short.js", "PAXED"],
+  ]);
+  const files = chk.readTarGz(tgz);
+  assert.equal(files.length, 1, "pax 头本身不算文件");
+  assert.equal(files[0].path, longPath, "文件路径应被 pax 的 path 覆盖");
+  assert.equal(files[0].data.toString("utf8"), "PAXED");
+});
+
+t("readTarGz 对格式非法的 pax 记录不误用（保持原 name，不抛异常）", () => {
+  const bad = `9999  path=whatever\n`;   // 两个空格 → 非法
+  const tgz = buildTgz([["PaxHeaders/x", bad, "x"], ["package/keep.js", "KEEP"]]);
+  const files = chk.readTarGz(tgz);
+  assert.equal(files.length, 1);
+  assert.equal(files[0].path, "package/keep.js", "解析不到 path 时应保留原名");
+});
+
+t("readTarGz 对损坏输入抛错（不静默返回空）", () => {
+  assert.throws(() => chk.readTarGz(Buffer.from("not a gzip stream")), /incorrect header check|invalid|unexpected/i);
 });
 
 // ── 2. 下载状态区分：absent 与 error 不能混为一谈 ──
