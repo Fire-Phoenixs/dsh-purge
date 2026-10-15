@@ -14,7 +14,9 @@ concurrency:
 
 jobs:
   release:
-    if: github.repository == 'YuJunZhiXue/dsh-purge'
+    # 续作仓库自己发版。上游 YuJunZhiXue/dsh-purge 的 tag 已全部同步到本仓库，
+    # 更新链路（codeload refs/heads 与 refs/tags）也只认本仓库。
+    if: github.repository == 'Fire-Phoenixs/dsh-purge'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -59,4 +61,4 @@ jobs:
           fi
           test -s "$zip"
           gh release upload "$tag" "$zip" --clobber
-          echo "published https://github.com/YuJunZhiXue/dsh-purge/releases/tag/${tag}"
+          echo "published https://github.com/Fire-Phoenixs/dsh-purge/releases/tag/${tag}"

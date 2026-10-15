@@ -53,10 +53,34 @@
 | `#77 REWIND_DROP_SENT_ON_APPEND` | `this.revised.clear()` 改为 `if (this.revised.size > 0) this.revised.clear()` | 追加一条变体 |
 | `#53 WEB_SURFACE_PROHIBITION` | 官方已删除 `Do not start a replacement server…` 整段 | **无需处理**（官方删除 = 该补丁目的自动达成） |
 
-`package.json` 的 `dshTarget` 由钉死单版本 `0.2.0-rc.2` 放宽为
+- `package.json` 的 `dshTarget` 由钉死单版本 `0.2.0-rc.2` 放宽为
 `>=0.2.0-rc.2 <0.3.0-0`，继续只覆盖 dsh 0.2 线，不宣称支持 0.1.x。
+- 发行源整体切到本仓库，见下一节。
 
-### 3. 新增锚点体检脚本（增量、可选运行）
+### 3. 发行源切到本仓库（安装 / 更新不再依赖上游）
+
+上游已公告暂停维护并可能删库。原版的安装与更新链路全部指向上游，一旦上游消失，
+存量用户的更新检查就会断在这里。本续作把**发行链路**整体切到本仓库：
+
+| 位置 | 原值 | 现值 |
+| --- | --- | --- |
+| `package.json` `dsh.install.{tarball,zip,git}` | `YuJunZhiXue/dsh-purge` | `Fire-Phoenixs/dsh-purge` |
+| `package.json` `repository` / `homepage` / `bugs` | 上游 | 本仓库 |
+| `lib/update.js` `REPO` | `YuJunZhiXue/dsh-purge` | `Fire-Phoenixs/dsh-purge` |
+| `lib/redteam/ui.js` 默认仓库兜底 | 上游 | 本仓库 |
+| `client.js` 内用户须知里的源码链接 | 上游 | 本仓库（**另加一行**署名链接指向上游） |
+| `.github/workflows/release.yml` 发版仓库门 | 上游 | 本仓库 |
+| README 全部安装 / 唤起 / clone / tarball / Releases 链接 | 上游 | 本仓库 |
+
+**署名性质的上游链接一律保留、不替换**：`LICENSE` 来源、README「署名要求」章节、
+违规商用公示、`docs/redteam-upstream-*`、以及新增的 `upstream` 徽章与
+`welcome.originRepo` 指向 —— 这些是许可与署名的依据，不是发行入口。
+
+上游 73 个 tag 已全部同步到本仓库，`lib/update.js` 的版本列表（走
+`api.github.com/repos/<REPO>/tags`）与下载（走 `codeload.github.com/<REPO>`）
+因此都落在本仓库，不依赖上游 Releases。
+
+### 4. 新增锚点体检脚本（增量、可选运行）
 
 `scripts/check-anchors.mjs`：从 npm 拉官方干净源码，逐条验证 82 个补丁的锚点是否
 还打得进去，输出失效清单。上游缺的正是这个——`optional: true` 的补丁锚点失效时
@@ -74,6 +98,7 @@ node scripts/check-anchors.mjs 0.2.0-rc.2 0.2.1-alpha.3
 - **不提供、不分发、不新增提示词。** 上游 issue [#27](https://github.com/YuJunZhiXue/dsh-purge/issues/27) 已明确「不再提供提示词，提示词自己寻找」，并把明文提示词从 git 与 npm 双排除（`.gitignore` / `.npmignore`）。本续作沿用该决定：只维护插件引擎与补丁体系，提示词由使用者自行放入 `$DSH_HOME/prompt-inject.md`。
 - **不重构补丁引擎。** 所有兼容性改动均为「追加候选变体」，既有补丁条目、既有 marker、既有回滚链（`.dshpurge.bak`）行为不变。
 - **不改动原作者的任何声明性内容**：`LICENSE`、`docs/notice/*`（违规商用公示证据）、README 的署名与违规商用章节、`docs/redteam-upstream-*` 全部原样保留。
+- **不冒充原作者**：发行源换成自己的仓库，但署名义务指向上游；用户须知里同时给出本仓库（安装/更新）与原仓库（署名/许可）两个链接，不制造「这是原作者新仓库」的误导。
 - **不主张接管上游。** 上游写的是「恢复维护时会在本 README 说明」，即作者留有回来的余地。若上游恢复维护，本仓库应让位。
 
 ---

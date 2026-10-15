@@ -13,6 +13,7 @@
   - #40 `COMPLETE_PROMPT_KEEP_INJECT`：官方在 `return` 前新增 `requiredContexts`，`contexts` 在 `runtimeContextSuppressed` 时改为「只保留 required 项」；变体原样保留该语义。
   - #77 `REWIND_DROP_SENT_ON_APPEND`：`this.revised.clear()` 加了 `size > 0` 守卫，锚点跟进。
 - `dshTarget` 由钉死单版本改为 `>=0.2.0-rc.2 <0.3.0-0`（仍只覆盖 dsh 0.2 线，不宣称支持 0.1.x）。
+- **发行源整体切到本仓库**：`dsh.install` 三个地址、`repository`/`homepage`/`bugs`、`lib/update.js` 的 `REPO`、`lib/redteam/ui.js` 的默认仓库兜底、`client.js` 用户须知链接、`release.yml` 发版仓库门、README 的安装/唤起/clone/tarball/Releases 链接全部改指 `Fire-Phoenixs/dsh-purge`。上游 73 个 tag 已同步过来，版本列表（`api.github.com/.../tags`）与下载（`codeload.github.com/...`）都不再依赖上游。**署名性质的上游链接全部保留**：LICENSE 出处、署名要求章节、违规商用公示、`docs/redteam-upstream-*`、README 的 `upstream` 徽章、用户须知里的原作者仓库行。
 - 新增 `scripts/check-anchors.mjs`：从 npm 拉官方干净源码，按 `ALL_PATCHES` 顺序跑一遍，报出「零改动且无 marker」的补丁——即静默失效的那些。用法：`node scripts/check-anchors.mjs [旧版本] [新版本]`；有新增强锚点缺口时退出码为 1，可进 CI。
 - 本版改动范围：`lib/core.js`（追加锚点变体）、`package.json`、README 中英各一段、`COMPAT-NOTICE.md`、`scripts/check-anchors.mjs`、本说明。**未改动**：补丁引擎逻辑、`LICENSE`、`docs/notice/*`、上游署名与违规商用公示章节、红队演练台与技能。
 - 提示词按上游 issue #27 的决定**不提供、不新增**。
@@ -30,6 +31,7 @@
   - #40 `COMPLETE_PROMPT_KEEP_INJECT`: upstream added `requiredContexts` before `return` and changed what `contexts` holds under `runtimeContextSuppressed`; the variant preserves that semantics verbatim.
   - #77 `REWIND_DROP_SENT_ON_APPEND`: `this.revised.clear()` gained a `size > 0` guard.
 - `dshTarget` widened from a single pinned version to `>=0.2.0-rc.2 <0.3.0-0` (0.2 line only; 0.1.x is still not claimed).
+- **Distribution source moved to this repository**: the three `dsh.install` URLs, `repository`/`homepage`/`bugs`, `REPO` in `lib/update.js`, the default-repo fallback in `lib/redteam/ui.js`, the notice link in `client.js`, the release-workflow repository gate, and every README install / deep-link / clone / tarball / Releases link now point at `Fire-Phoenixs/dsh-purge`. All 73 upstream tags were mirrored, so both the version list (`api.github.com/.../tags`) and downloads (`codeload.github.com/...`) no longer depend on upstream. **Attribution links to upstream are all preserved**: LICENSE provenance, the attribution section, the non-commercial notice, `docs/redteam-upstream-*`, the README `upstream` badge, and the original-author line in the welcome notice.
 - New `scripts/check-anchors.mjs`: pulls pristine official sources from npm, runs `ALL_PATCHES` in order, and reports patches with zero changes and no marker — the ones that fail silently. Usage: `node scripts/check-anchors.mjs [old] [new]`; exits 1 on new hard-anchor gaps, so it can gate CI.
 - Changed files: `lib/core.js` (appended anchor variants), `package.json`, one paragraph in each README, `COMPAT-NOTICE.md`, `scripts/check-anchors.mjs`, these notes. **Untouched**: patch engine logic, `LICENSE`, `docs/notice/*`, upstream attribution and non-commercial sections, the red-team workbench and skills.
 - No prompts are added or distributed, per upstream issue #27.
