@@ -29,6 +29,8 @@
   <a href="README.md">English</a> | <a href="README.zh-CN.md">中文</a>
 </p>
 
+> **本仓库是 [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge) 的兼容性续作。** 基于上游 `master` @ `6c1d638`，只做增量改动：合入上游三个未合并的修复 PR（[#119](https://github.com/YuJunZhiXue/dsh-purge/pull/119) / [#115](https://github.com/YuJunZhiXue/dsh-purge/pull/115) / [#110](https://github.com/YuJunZhiXue/dsh-purge/pull/110)）、补齐 dsh **0.2.1-alpha.3** 的补丁锚点漂移、`dshTarget` 放宽到整个 0.2 线。**原名、原代码、原提示词的一切权利与署名均归原作者 YuJunZhiXue；MIT 许可与非盈利条款继续生效。** 不改架构、不重构、不提供提示词。详见 [COMPAT-NOTICE.md](COMPAT-NOTICE.md)。
+
 > **暂停更新。** 作者因工作安排，近期没有稳定收入，项目维护暂时搁置：不再发版、暂不收 issue / PR，也不保证跟进新版 dsh。仓库仍可自用；赞助见下方。恢复维护时会在本 README 说明。
 
 > **官方 Web 和官方桌面端都支持。** 官方 `dsh web` 用 profile `web`；官方桌面 EXE（DeepSeek Harness **0.2.0-rc.2**）用 profile `desktop`。两边分开安装、分开点「应用」。当前版本只适配 dsh 0.2；更早的 dsh 用对应的老版本插件。社区桌面端不维护。
@@ -162,10 +164,18 @@ Harness 不只是把问题交给模型。它还会在运行时改提示词、审
 
 最新版只支持 **dsh 0.2**，不要拿它去打 0.1.x。
 
-- **dsh 0.2**（官方桌面 **0.2.0-rc.2** / 官方 `dsh web`）：用 **1.1.40** 及以上。本页命令装的就是这一档。
+- **dsh 0.2**（官方桌面 **0.2.0-rc.2** / 官方 `dsh web` / **0.2.1-alpha 线**）：用 **1.1.40** 及以上。本页命令装的就是这一档。
 - **dsh 0.1.7**（含 rc.1 / rc.2）：用 **1.1.39** 及更早 —— 在 [Releases](https://github.com/YuJunZhiXue/dsh-purge/releases) 里选对应标签。
 
 对不上的补丁会显示待应用或跳过，不会乱改文件。
+
+本续作把 `dshTarget` 放宽为 `>=0.2.0-rc.2 <0.3.0-0`（仍只覆盖 dsh 0.2 线），并补齐了
+**0.2.1-alpha.3** 上 4 处锚点漂移。想自查某个版本还差哪些锚点：
+
+```sh
+node scripts/check-anchors.mjs                        # dshTarget 下限 -> npm latest
+node scripts/check-anchors.mjs 0.2.0-rc.2 0.2.1-alpha.3
+```
 
 ---
 

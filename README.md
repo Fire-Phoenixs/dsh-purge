@@ -29,6 +29,8 @@
   <a href="README.md">English</a> | <a href="README.zh-CN.md">中文</a>
 </p>
 
+> **This repository is a compatibility continuation of [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge).** Based on upstream `master` @ `6c1d638`, with additive changes only: three unreleased upstream fix PRs ([#119](https://github.com/YuJunZhiXue/dsh-purge/pull/119) / [#115](https://github.com/YuJunZhiXue/dsh-purge/pull/115) / [#110](https://github.com/YuJunZhiXue/dsh-purge/pull/110)), anchor variants for dsh **0.2.1-alpha.3**, and a widened `dshTarget` covering the whole 0.2 line. **All rights and attribution for the original name, code and prompts remain with the original author YuJunZhiXue; the MIT license and the non-commercial terms still apply.** No refactors, no rewrites, no prompt distribution. See [COMPAT-NOTICE.md](COMPAT-NOTICE.md).
+
 > **Updates paused.** The author has no steady income for now because of work. Maintenance is on hold: no new releases, issues / PRs are not taken, and new dsh versions are not guaranteed. The repo stays usable; see Sponsor below. When maintenance resumes, this README will say so.
 
 > **Official Web and the official desktop app are both supported.** Official `dsh web` uses profile `web`. The official desktop EXE (DeepSeek Harness **0.2.0-rc.2**) uses profile `desktop`. Install and Apply them separately. This release targets dsh 0.2 only. Older dsh builds need the matching older plugin. Community Desktop is not maintained.
@@ -162,10 +164,18 @@ WeChat name **「老张的ai科技」**, same handle as the live-room viewer boa
 
 The latest plugin supports **dsh 0.2** only — do not apply it to 0.1.x.
 
-- **dsh 0.2** (official desktop **0.2.0-rc.2** / official `dsh web`): use **1.1.40** or newer. This page installs that line.
+- **dsh 0.2** (official desktop **0.2.0-rc.2** / official `dsh web` / the **0.2.1-alpha** line): use **1.1.40** or newer. This page installs that line.
 - **dsh 0.1.7** (incl. rc.1 / rc.2): use **1.1.39** or older — pick the tag on [Releases](https://github.com/YuJunZhiXue/dsh-purge/releases).
 
 Unmatched patches stay pending or skipped; nothing is rewritten blindly.
+
+This continuation widens `dshTarget` to `>=0.2.0-rc.2 <0.3.0-0` (still the 0.2 line only) and
+adds the four anchor variants needed on **0.2.1-alpha.3**. Check any version yourself:
+
+```sh
+node scripts/check-anchors.mjs                        # dshTarget lower bound -> npm latest
+node scripts/check-anchors.mjs 0.2.0-rc.2 0.2.1-alpha.3
+```
 
 ---
 

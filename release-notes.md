@@ -1,3 +1,39 @@
+# 1.1.72
+
+## 中文
+
+- 版本 **1.1.72**。这是 [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge) 的**兼容性续作**，基于上游 `master` @ `6c1d638`，只做增量更新；一切署名与权利归原作者。
+- 合入上游三个一直没被接收的修复 PR（按原提交 cherry-pick，提交者身份未改写）：
+  - #119（@1723582064）：`repairOfficialCliAfterUnpack` 存 `.bak` 漏 `await`，会以 `dsh: fatal load failure` 退出、并让回滚拿到补丁后的字节。
+  - #115（@lnuxe）：`{{cwd}}` 未注册的 harness 上用静态句兜底，否则对话起不来。
+  - #110（@Minervaowl7）：停用时交还默认预设指针；卸载清理同时认 `dsh.profile.bundles`。
+- 新增 dsh **0.2.1-alpha.3** 的锚点变体（只在既有 `replacements` 数组**追加**候选，不改既有条目、不动 marker 与回滚链）：
+  - #26 `MINIMAL_PERSONA_PURGE`：官方 minimal 预设中 persona 之后多了 `tool-fs`，锚点尾部由 `persistent-shell` 改为 `tool-fs`。
+  - #32 `WEB_SURFACE_IDENTITY_NEUTRAL`：`DSH_WEB_URL` 描述由 `Canonical local URL` 改成 `Advertised URL`，另附注释行变体。
+  - #40 `COMPLETE_PROMPT_KEEP_INJECT`：官方在 `return` 前新增 `requiredContexts`，`contexts` 在 `runtimeContextSuppressed` 时改为「只保留 required 项」；变体原样保留该语义。
+  - #77 `REWIND_DROP_SENT_ON_APPEND`：`this.revised.clear()` 加了 `size > 0` 守卫，锚点跟进。
+- `dshTarget` 由钉死单版本改为 `>=0.2.0-rc.2 <0.3.0-0`（仍只覆盖 dsh 0.2 线，不宣称支持 0.1.x）。
+- 新增 `scripts/check-anchors.mjs`：从 npm 拉官方干净源码，按 `ALL_PATCHES` 顺序跑一遍，报出「零改动且无 marker」的补丁——即静默失效的那些。用法：`node scripts/check-anchors.mjs [旧版本] [新版本]`；有新增强锚点缺口时退出码为 1，可进 CI。
+- 本版改动范围：`lib/core.js`（追加锚点变体）、`package.json`、README 中英各一段、`COMPAT-NOTICE.md`、`scripts/check-anchors.mjs`、本说明。**未改动**：补丁引擎逻辑、`LICENSE`、`docs/notice/*`、上游署名与违规商用公示章节、红队演练台与技能。
+- 提示词按上游 issue #27 的决定**不提供、不新增**。
+
+## English
+
+- **1.1.72**. A **compatibility continuation** of [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge), based on upstream `master` @ `6c1d638`. Additive changes only; all attribution and rights stay with the original author.
+- Cherry-picks three upstream fix PRs that were never merged (identities preserved):
+  - #119 (@1723582064): missing `await` when writing the `.bak` made the host exit with `dsh: fatal load failure` and made rollback capture post-patch bytes.
+  - #115 (@lnuxe): fall back to a static sentence when `{{cwd}}` is unregistered; otherwise chats fail to start.
+  - #110 (@Minervaowl7): hand back the default-preset pointer on disable; uninstall cleanup also recognises `dsh.profile.bundles`.
+- Adds dsh **0.2.1-alpha.3** anchor variants by **appending** candidates to existing `replacements` arrays only — no existing entry, marker or rollback chain is touched:
+  - #26 `MINIMAL_PERSONA_PURGE`: the official minimal preset now inserts `tool-fs` right after persona, so the anchor tail moves from `persistent-shell` to `tool-fs`.
+  - #32 `WEB_SURFACE_IDENTITY_NEUTRAL`: the `DSH_WEB_URL` description changed from `Canonical local URL` to `Advertised URL`, plus a comment-line variant.
+  - #40 `COMPLETE_PROMPT_KEEP_INJECT`: upstream added `requiredContexts` before `return` and changed what `contexts` holds under `runtimeContextSuppressed`; the variant preserves that semantics verbatim.
+  - #77 `REWIND_DROP_SENT_ON_APPEND`: `this.revised.clear()` gained a `size > 0` guard.
+- `dshTarget` widened from a single pinned version to `>=0.2.0-rc.2 <0.3.0-0` (0.2 line only; 0.1.x is still not claimed).
+- New `scripts/check-anchors.mjs`: pulls pristine official sources from npm, runs `ALL_PATCHES` in order, and reports patches with zero changes and no marker — the ones that fail silently. Usage: `node scripts/check-anchors.mjs [old] [new]`; exits 1 on new hard-anchor gaps, so it can gate CI.
+- Changed files: `lib/core.js` (appended anchor variants), `package.json`, one paragraph in each README, `COMPAT-NOTICE.md`, `scripts/check-anchors.mjs`, these notes. **Untouched**: patch engine logic, `LICENSE`, `docs/notice/*`, upstream attribution and non-commercial sections, the red-team workbench and skills.
+- No prompts are added or distributed, per upstream issue #27.
+
 # 1.1.71
 
 ## 中文
