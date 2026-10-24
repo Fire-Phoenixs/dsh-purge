@@ -4,7 +4,7 @@
 
 <h1 align="center">⚔️ DeepSeek Harness 网络安全红队工具（dsh-purge）</h1>
 
-<p align="center"><strong>Version 1.1.71</strong></p>
+<p align="center"><strong>Version 1.1.73</strong></p>
 
 <p align="center">
   <em>DeepSeek Harness 破甲：让所有模型都能破甲，不同模型可换不同提示词；默认提示词面向国模「小码酱」。Jailbreak for every model — swap prompts per model. 求 Star 收藏 ⭐ 如要二开，请查看署名要求部分</em>
@@ -15,7 +15,7 @@
   <a href="https://github.com/Fire-Phoenixs/dsh-purge/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-65a30d?style=flat" alt="MIT license"></a>
   <a href="https://github.com/YuJunZhiXue/dsh-purge"><img src="https://img.shields.io/badge/upstream-YuJunZhiXue%2Fdsh--purge-555" alt="Upstream"></a>
   <a href="https://awesome-dsh-plugin.com"><img src="https://awesome-dsh-plugin.com/badge.svg" alt="awesome · DSH plugin"></a>
-  <a href="https://www.deepseek.com/harness/"><img src="https://img.shields.io/badge/dsh-0.2.1--alpha.3-blue" alt="DSH"></a>
+  <a href="https://www.deepseek.com/harness/"><img src="https://img.shields.io/badge/dsh-0.2.1--rc.3-blue" alt="DSH"></a>
   <br>
   <img src="https://img.shields.io/badge/Node.js-%3E%3D18-339933?logo=node.js&logoColor=fff" alt="Node.js">
   <img src="https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=000" alt="JavaScript">
@@ -25,13 +25,13 @@
   <a href="README.md">English</a> | <a href="README.zh-CN.md">中文</a>
 </p>
 
-> **本仓库是 [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge) 的兼容性续作，也是本续作的安装与更新源。** 基于上游 `master` @ `6c1d638`，只做增量改动：合入上游三个未合并的修复 PR（[#119](https://github.com/YuJunZhiXue/dsh-purge/pull/119) / [#115](https://github.com/YuJunZhiXue/dsh-purge/pull/115) / [#110](https://github.com/YuJunZhiXue/dsh-purge/pull/110)）、补齐 dsh **0.2.1-alpha.3** 的补丁锚点漂移、`dshTarget` 放宽到整个 0.2 线。**原名、原代码、原提示词的一切权利与署名均归原作者 YuJunZhiXue；MIT 许可与非盈利条款继续生效。** 不改架构、不重构、不提供提示词。详见 [COMPAT-NOTICE.md](COMPAT-NOTICE.md)。
+> **本仓库是 [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge) 的兼容性续作，也是本续作的安装与更新源。** 基于上游 `master` @ `6c1d638`，只做增量改动：合入上游三个未合并的修复 PR（[#119](https://github.com/YuJunZhiXue/dsh-purge/pull/119) / [#115](https://github.com/YuJunZhiXue/dsh-purge/pull/115) / [#110](https://github.com/YuJunZhiXue/dsh-purge/pull/110)），并把锚点钉死在 **dsh 0.2.1-rc.3**（`dshTarget: >=0.2.1-rc.3 <0.2.2-0`），只对 rc.3 官方原版源码验证，已删掉多版本锚点变体。**原名、原代码、原提示词的一切权利与署名均归原作者 YuJunZhiXue；MIT 许可与非盈利条款继续生效。** 不改架构、不重构、不提供提示词。详见 [COMPAT-NOTICE.md](COMPAT-NOTICE.md)。
 >
 > 插件内的**安装 / 更新 / 版本列表全部走本仓库**（`Fire-Phoenixs/dsh-purge`），不再依赖上游——上游已公告暂停维护并可能删库。署名义务仍指向上游仓库。
 
 > **暂停更新。** 作者因工作安排，近期没有稳定收入，项目维护暂时搁置：不再发版、暂不收 issue / PR，也不保证跟进新版 dsh。仓库仍可自用；赞助见下方。恢复维护时会在本 README 说明。
 
-> **官方 Web 和官方桌面端都支持。** 官方 `dsh web` 用 profile `web`；官方桌面 EXE（DeepSeek Harness **0.2.0-rc.2**）用 profile `desktop`。两边分开安装、分开点「应用」。当前版本只适配 dsh 0.2；更早的 dsh 用对应的老版本插件。社区桌面端不维护。
+> **官方 Web 和官方桌面端都支持。** 官方 `dsh web` 用 profile `web`；官方桌面 EXE 用 profile `desktop`。两边分开安装、分开点「应用」。当前版本只适配 dsh **0.2.1-rc.3**；更早的 dsh 用对应的老版本插件。社区桌面端不维护。
 >
 > 写进 profile 还不会改宿主。点会话标题旁的 **dsh-purge** → **清洗** → **应用**。成功会自动重启；补丁没打完不重启。重启后新开一轮对话，注入才进当前会话。
 >
@@ -160,20 +160,14 @@ Harness 不只是把问题交给模型。它还会在运行时改提示词、审
 
 ## 适配范围
 
-最新版只支持 **dsh 0.2**，不要拿它去打 0.1.x。
+本版只针对 **dsh 0.2.1-rc.3**：`dshTarget` = `>=0.2.1-rc.3 <0.2.2-0`，不要拿它去打 0.2.0 或 0.1.x。
 
-- **dsh 0.2**（官方桌面 **0.2.0-rc.2** / 官方 `dsh web` / **0.2.1-alpha 线**）：用 **1.1.40** 及以上。本页命令装的就是这一档。
-- **dsh 0.1.7**（含 rc.1 / rc.2）：用 **1.1.39** 及更早 —— 标签已同步到本仓库，可在 [Tags](https://github.com/Fire-Phoenixs/dsh-purge/tags) 或上游 [Releases](https://github.com/YuJunZhiXue/dsh-purge/releases) 里选对应标签。
+- **dsh 0.2.1-rc.3**（官方 `dsh web` 与同线的官方桌面 EXE）：用 **1.1.73**。本页命令装的就是这一版。
+- **dsh 0.2.0 线及更早**（含 0.1.5 / 0.1.7 / 0.2.1-alpha 线）：用 **1.1.72** 及更早的版本 —— 标签已同步到本仓库，可在 [Tags](https://github.com/Fire-Phoenixs/dsh-purge/tags) 或上游 [Releases](https://github.com/YuJunZhiXue/dsh-purge/releases) 里选对应标签。
 
-对不上的补丁会显示待应用或跳过，不会乱改文件。
+锚点只对 rc.3 官方原版源码验证通过：291 个官方包、50 个补丁目标文件、77 条补丁、0 缺口。目标文件读到但锚点对不上的补丁现在显示为「没对上」（`unmatched`），不再静默跳过，也不会乱改文件。
 
-本续作把 `dshTarget` 放宽为 `>=0.2.0-rc.2 <0.3.0-0`（仍只覆盖 dsh 0.2 线），并补齐了
-**0.2.1-alpha.3** 上 4 处锚点漂移。想自查某个版本还差哪些锚点：
-
-```sh
-node scripts/check-anchors.mjs                        # dshTarget 下限 -> npm latest
-node scripts/check-anchors.mjs 0.2.0-rc.2 0.2.1-alpha.3
-```
+本版不再携带 0.1.5 / 0.1.7 / 0.2.0 / alpha 线的锚点变体，也不再有跨版本自动体检脚本 —— 它与对应测试、CI 步骤、npm script 已在 1.1.73 一并移除，因为跨版本自动比对正是这次要删掉的自动检测。想核对某个宿主：以 npm 上 `@deepseek-ai/dsh@0.2.1-rc.3` 的依赖闭包建树，再把补丁按顺序跑一遍即可。
 
 ---
 
@@ -202,7 +196,7 @@ npm registry 与插件市场都在原作者名下登记，因此**推荐直接�
 桌面客户端也可以点按钮（`dsh://` 唤起）：
 
 <p align="center">
-  <a href="dsh://plugin/install?id=dsh-purge&name=dsh-purge&version=1.1.72&repo=Fire-Phoenixs%2Fdsh-purge&permissions=%E7%B3%BB%E7%BB%9F%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%B3%A8%E5%85%A5%2C%E6%9C%AC%E6%9C%BA%E8%A1%A5%E4%B8%81%2C%E8%AE%BE%E7%BD%AE%E9%A1%B5&downloadUrl=https%3A%2F%2Fgithub.com%2FFire-Phoenixs%2Fdsh-purge%2Farchive%2Frefs%2Fheads%2Fmaster.tar.gz"><strong>唤起客户端一键安装</strong></a>
+  <a href="dsh://plugin/install?id=dsh-purge&name=dsh-purge&version=1.1.73&repo=Fire-Phoenixs%2Fdsh-purge&permissions=%E7%B3%BB%E7%BB%9F%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%B3%A8%E5%85%A5%2C%E6%9C%AC%E6%9C%BA%E8%A1%A5%E4%B8%81%2C%E8%AE%BE%E7%BD%AE%E9%A1%B5&downloadUrl=https%3A%2F%2Fgithub.com%2FFire-Phoenixs%2Fdsh-purge%2Farchive%2Frefs%2Fheads%2Fmaster.tar.gz"><strong>唤起客户端一键安装</strong></a>
 </p>
 
 ### 装完都要做这三步
@@ -437,7 +431,7 @@ purge_status   purge_apply   purge_revert
 
 ### 响应速度
 
-DSH 会按顺序执行同一批中的 Bash 调用。旧版 dsh-purge 把默认前台等待从 60 秒提高到了 10 分钟，一条慢命令会让后续调用一起等待。补丁 #21 现在把带插件标记的旧值恢复为官方的 60 秒。无标记的等待时间和其他自定义值会保留；无标记的 10 分钟无法可靠地区分是插件旧值还是用户设置。
+DSH 会按顺序执行同一批中的 Bash 调用。旧版 dsh-purge 把默认前台等待从 60 秒提高到了 10 分钟，一条慢命令会让后续调用一起等待。负责恢复的那条补丁（#21）在 1.1.73 已删除，因为它只服务于旧版本插件写下的值，所以残留值要你自己清：用下面这段覆盖，或直接改那个 profile 里残留的 `timeoutMs`。干净的官方安装从来没有被抬高过。
 
 在 macOS/Linux 的 `dsh web` 中，如需更快返回工具结果，可在 `$DSH_HOME/profiles/web/cordis.patch.yml`（通常是 `~/.dsh/profiles/web/cordis.patch.yml`）添加下面的条目。已有相同 id 时修改原条目，不要重复添加。这个 profile 覆盖层在内置配置之后加载，后续应用插件会保留它。
 
@@ -596,7 +590,7 @@ flowchart LR
 ## 说明
 
 - 改动范围是本机 `@deepseek-ai/*` 包里的渲染文案、默认策略和执行逻辑，以及用户目录下的覆盖文件与规则集。
-- 升级后原文对不上会显示跳过，这次应用仍算完成，不会乱改。
+- 升级后原文对不上任一条锚点的会显示「没对上」，这次应用仍算完成，不会乱改。
 - 不改动非 `@deepseek-ai` 的第三方插件源仓库（启动时的 CMD 无感会**尽力**修补已装的 doctor / market / 梁神 / mnemon，属运行时补丁）。
 - 安装走本仓库的 tarball 直链：`dsh plugin --profile web add https://github.com/Fire-Phoenixs/dsh-purge/archive/refs/heads/master.tar.gz`（桌面端把 `web` 换成 `desktop`）。**不要用裸包名 `dsh-purge`** —— npm registry 上没有这个包，装了会拉不到；插件目录里那一项登记在原作者名下、且没有发布的 npm 版本。仓库已在本地时 `add .`。
 

@@ -1,3 +1,45 @@
+# 1.1.73
+
+## 中文
+
+- 版本 **1.1.73**。这是 [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge) 的**兼容性续作**，基于上游 `master` @ `6c1d638`，只做增量更新；一切署名与权利归原作者。
+- 目标版本钉死到 dsh **0.2.1-rc.3**：`dshTarget` 由 `>=0.2.0-rc.2 <0.3.0-0` 改为 `>=0.2.1-rc.3 <0.2.2-0`。
+- 删除兼容性自动检测机制：`scripts/check-anchors.mjs` 与测试 `tests/test-p2-check-anchors.mjs`、`release.yml` 里的 “Anchor health check (non-blocking)” 步骤、`package.json` 的 `check-anchors` 脚本入口一并移除。
+- 删除五条只为旧版本/旧文案服务的补丁（补丁总数 82 → 77）：
+  - #21 `BASH_TIMEOUT_RESTORE`：只用于把更早版本插件写坏的 `timeoutMs: 600000` 改回 60000；
+  - #80 `MINIMAL_OFFICIAL_TOOLSET`：只用于撤掉更早版本插件往 minimal 预设里加的 fs/web 工具；
+  - #50 `SESSION_REFERENCE_FRAMING_NEUTRAL`：目标是「把跨会话引用改回 0.1.7 的 untrusted 措辞」，rc.3 官方原文本就已经是 untrusted；
+  - #53 `WEB_SURFACE_PROHIBITION`：`You are interacting with the user through the local web GUI…` 与 `Do not start a replacement server…` 两段官方在 rc.3 已删除/改写，补丁目的自动达成；
+  - #88 `HUNG_PROMPT_STRICT_NEEDLE`：只补一个 `[dsh-purge-88]` 标记，严格针逻辑已并入 #87 的候选。
+  - 以上在干净的 0.2.1-rc.3 官方源码上命中数均为 0。
+- 收敛多版本锚点候选：21 条补丁里共删除 59 个候选变体——这些候选在 0.2.1-rc.3 官方源码上零命中，原本是给 0.1.5 / 0.1.7 / 0.2.0 / 0.2.1-alpha 等旧版本准备的。现在每条补丁只保留在 rc.3 上实测命中的锚点；命中判定用顺序模拟（后一个候选可能匹配前一个候选的产物）。
+- 取消「兼容」分组：#40 `COMPLETE_PROMPT_KEEP_INJECT` 的 layer 从「0.1.5 兼容」改回「提示词」；#47 `ANTHROPIC_OAUTH_NO_CLAUDE_IDENTITY`、#49 `ANTHROPIC_OAUTH_CLI_NEUTRAL` 的 layer 从「0.2.0 兼容」改到「代码」。`client.js` 的 `group.compat` / `group.dsh20` 文案、`0.1.5 兼容` / `0.2.0 兼容` 层名映射、`GROUP_ORDER` 里的 `compat` / `dsh20` 一并删除。补丁分组只剩 提示词 / 代码 / 工具 三种（外加引擎）。
+- 不再静默跳过：目标文件读到但锚点对不上时，状态由 `skipped` 改为 `unmatched`（界面显示「没对上」），`applyPatches` 的汇总状态同样改为 `unmatched`。
+- 验证结果：以 npm 上 `@deepseek-ai/dsh@0.2.1-rc.3` 的依赖闭包建树（291 个官方包），解析出 50 个补丁目标文件，把 77 条补丁按顺序全部跑一遍——**0 条锚点缺口**，无新增失效；另外用 `patchStatus` 在干净树上端到端跑一遍，状态只剩 `pending` / `applied` / `missing_file` / `na`（没有 `unmatched`）。`node --check` 与仓库回归测试全绿。
+- **升级提示**：从 1.1.72 及更早版本升级时，宿主里若还残留插件写的 `timeoutMs: 600000`，或 minimal 预设里还残留 fs/web 工具，因 #21 / #80 已删，不会再被自动清掉——需手动清理这两处，或先用旧版本回滚一次再升级。
+- 本版改动范围：`package.json`、`lib/core.js`（锚点与层名收敛）、`client.js`（分组文案）、`tests/`、`.github/workflows/release.yml`、README 中英、`COMPAT-NOTICE.md`、本说明。**未改动**：补丁引擎逻辑、`LICENSE`、`docs/notice/*`、上游署名与违规商用公示章节、红队演练台与技能。
+- 提示词按上游 issue #27 的决定**不提供、不新增**。
+
+## English
+
+- **1.1.73**. A **compatibility continuation** of [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge), based on upstream `master` @ `6c1d638`. Additive changes only; all attribution and rights stay with the original author.
+- Target pinned to dsh **0.2.1-rc.3**: `dshTarget` moves from `>=0.2.0-rc.2 <0.3.0-0` to `>=0.2.1-rc.3 <0.2.2-0`.
+- Automatic compatibility detection removed: `scripts/check-anchors.mjs` and `tests/test-p2-check-anchors.mjs`, the “Anchor health check (non-blocking)” step in `release.yml`, and the `check-anchors` script entry in `package.json` are all gone.
+- Five patches dropped — they only served values or wording left by older versions (patch count 82 → 77):
+  - #21 `BASH_TIMEOUT_RESTORE`: only rewrote `timeoutMs: 600000`, written by older plugin builds, back to 60000;
+  - #80 `MINIMAL_OFFICIAL_TOOLSET`: only removed fs/web tools that older builds had added to the minimal preset;
+  - #50 `SESSION_REFERENCE_FRAMING_NEUTRAL`: its goal was to reword cross-session references to the 0.1.7 untrusted phrasing, which rc.3 already ships natively;
+  - #53 `WEB_SURFACE_PROHIBITION`: both target paragraphs (`You are interacting with the user through the local web GUI…`, `Do not start a replacement server…`) are gone or rewritten in rc.3, so the patch has nothing left to do;
+  - #88 `HUNG_PROMPT_STRICT_NEEDLE`: only stamped a `[dsh-purge-88]` marker; the strict-needle logic already lives in #87's surviving candidate.
+  - All of them match zero times in the pristine 0.2.1-rc.3 sources.
+- Multi-version anchor candidates collapsed: 59 candidate variants removed across 21 patches — all zero-hit against the 0.2.1-rc.3 sources and written for 0.1.5 / 0.1.7 / 0.2.0 / 0.2.1-alpha. Each patch now keeps only the anchors that actually matched on rc.3; matching is decided by sequential simulation (a later candidate may match the output of an earlier one).
+- The “compat” grouping is gone: the layer of #40 `COMPLETE_PROMPT_KEEP_INJECT` returns from “0.1.5 compat” to “prompt”; #47 `ANTHROPIC_OAUTH_NO_CLAUDE_IDENTITY` and #49 `ANTHROPIC_OAUTH_CLI_NEUTRAL` move from “0.2.0 compat” to “code”. The `group.compat` / `group.dsh20` strings in `client.js`, the `0.1.5 兼容` / `0.2.0 兼容` layer-name mapping, and `compat` / `dsh20` in `GROUP_ORDER` are deleted. Patch groups are now prompt / code / tools only, plus the engine.
+- No more silent skips: when a target file is found but an anchor does not match, the status is `unmatched` instead of `skipped` (shown as “没对上” in the dock), and the `applyPatches` summary uses the same status.
+- Verified against npm `@deepseek-ai/dsh@0.2.1-rc.3`: 291 official packages resolved into a tree, 50 patch target files found, all 77 patches run in order — **zero anchor gaps**, no new breakage. An end-to-end `patchStatus` run on the clean tree reports only `pending` / `applied` / `missing_file` / `na` (no `unmatched`). `node --check` and the repository test suite pass.
+- **Upgrade note**: coming from 1.1.72 or older, a leftover `timeoutMs: 600000` written by the plugin, or fs/web tools left in the minimal preset, is no longer cleaned up automatically now that #21 / #80 are gone — clean those two spots by hand, or roll back once with the older version before upgrading.
+- Changed in this release: `package.json`, `lib/core.js` (anchor and layer collapse), `client.js` (group strings), `tests/`, `.github/workflows/release.yml`, both READMEs, `COMPAT-NOTICE.md`, these notes. **Untouched**: patch engine logic, `LICENSE`, `docs/notice/*`, upstream attribution and non-commercial sections, the red-team workbench and skills.
+- No prompts are added or distributed, per upstream issue #27.
+
 # 1.1.72
 
 ## 中文

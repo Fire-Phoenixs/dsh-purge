@@ -135,13 +135,13 @@ await t("真实快照：更新后版本号、后端、客户端、预设、技�
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
-await t("真实快照：scripts/ 随更新进来（check-anchors 等工具可用）", async () => {
+await t("真实快照：scripts/ 随更新进来（构建脚本可用）", async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "dshpurge-p22b-"));
   const dest = path.join(tmp, "installed");
   fs.mkdirSync(dest, { recursive: true });
   fs.writeFileSync(path.join(dest, "package.json"), JSON.stringify({ name: "dsh-purge", version: "0.0.1" }));
   const rec = await hooks.stagedSwapOne(dest, ROOT, "p22b");
-  assert.ok(fs.existsSync(path.join(dest, "scripts", "check-anchors.mjs")), "scripts/ 应随更新进来");
+  assert.ok(fs.existsSync(path.join(dest, "scripts", "build-client.mjs")), "scripts/ 应随更新进来");
   assert.ok(fs.existsSync(path.join(dest, "COMPAT-NOTICE.md")), "COMPAT-NOTICE.md 应随更新进来");
   await hooks.rollbackSwap(rec);
   fs.rmSync(tmp, { recursive: true, force: true });

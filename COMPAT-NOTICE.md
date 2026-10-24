@@ -25,7 +25,8 @@
 ## 二、本续作做了什么 / What this continuation changes
 
 上游在 2026-10-12 公告：*「不再发版、暂不收 issue / PR，也不保证跟进新版 dsh」*。
-本续作**只做一件事：让上游最后版本继续在新版 dsh 上正常工作**。全部改动都是增量的。
+本续作**只做一件事：让上游最后版本继续在指定版本的 dsh 上正常工作**。当前钉住
+**dsh 0.2.1-rc.3**；改动集中在锚点与版本范围上，不重构补丁引擎、不改原作者声明。
 
 ### 1. 合入上游三个未合并的修复 PR
 
@@ -39,23 +40,32 @@
 | [#115](https://github.com/YuJunZhiXue/dsh-purge/pull/115) | [@lnuxe](https://github.com/lnuxe) | 兼容 `{{cwd}}` 变量未注册的 dsh 0.2.1-alpha.2（否则对话起不来） |
 | [#110](https://github.com/YuJunZhiXue/dsh-purge/pull/110) | [@Minervaowl7](https://github.com/Minervaowl7) | 停用时交还默认预设指针；卸载清理认 `dsh.profile.bundles` |
 
-### 2. 补齐 dsh 0.2.1-alpha.3 的锚点漂移
+### 2. 钉住 dsh 0.2.1-rc.3，删除多版本兼容层
 
-补丁体系按“字面锚点”匹配官方源码，官方一改文案补丁就哑火。逐条比对
-`0.2.0-rc.2` 与 `0.2.1-alpha.3` 的官方源码后，需要补锚点的只有以下几处，
-**全部采用「追加候选变体」写法，未改动任何既有补丁条目**：
+补丁体系按“字面锚点”匹配官方源码，官方一改文案补丁就哑火。此前为了横跨多个版本，
+每条补丁在 `replacements` 数组里堆了若干候选变体，还配了一套跨版本自动体检脚本。
+本版把范围收回到**单一版本**，把「兼容」当成一条要长期供养的分支砍掉：
 
-| 补丁 | 锚点漂移原因 | 处理 |
+- **锚点收敛到 rc.3**：21 条补丁里共删除 59 个候选变体（原本给 0.1.5 / 0.1.7 / 0.2.0 / 0.2.1-alpha 等旧版本准备），这些候选在 0.2.1-rc.3 官方源码上全部零命中。现在每条补丁只保留在 rc.3 上实测命中的锚点；命中判定用顺序模拟（后一个候选可能匹配前一个候选的产物）。
+- **删掉五条只为旧版本/旧文案服务的补丁**（补丁总数 82 → 77）：`#21 BASH_TIMEOUT_RESTORE` 只用于把更早版本插件写坏的 `timeoutMs: 600000` 改回 60000；`#80 MINIMAL_OFFICIAL_TOOLSET` 只用于撤掉更早版本插件往 minimal 预设里加的 fs/web 工具；`#50 SESSION_REFERENCE_FRAMING_NEUTRAL` 想把跨会话引用改回 0.1.7 的 untrusted 措辞，而 rc.3 原文本已是 untrusted；`#53 WEB_SURFACE_PROHIBITION` 的两段目标文案官方在 rc.3 已删除/改写；`#88 HUNG_PROMPT_STRICT_NEEDLE` 只补一个 `[dsh-purge-88]` 标记，严格针逻辑已并入 `#87`。这五条在干净的 rc.3 官方源码上命中数都是 0 —— 它们服务的是旧版插件留下的脏值或旧版文案，不是 rc.3 源码。
+- **`dshTarget` 钉成 `>=0.2.1-rc.3 <0.2.2-0`**（原为 `>=0.2.0-rc.2 <0.3.0-0`），不再宣称覆盖整个 0.2 线。
+- **取消「兼容」分组**：`#40 COMPLETE_PROMPT_KEEP_INJECT` 的 layer 从「0.1.5 兼容」改回「提示词」，`#47 ANTHROPIC_OAUTH_NO_CLAUDE_IDENTITY`、`#49 ANTHROPIC_OAUTH_CLI_NEUTRAL` 的 layer 从「0.2.0 兼容」改到「代码」；`client.js` 里对应的分组文案、层名映射与 `GROUP_ORDER` 一并删除，补丁分组只剩 提示词 / 代码 / 工具（外加引擎）。
+- **不再静默跳过**：目标文件读到、锚点对不上，状态由 `skipped` 改为 `unmatched`（界面显示「没对上」），`applyPatches` 的汇总状态同步改为 `unmatched`。
+
+#### rc.3 复核结果
+
+1.1.72 记录的 5 条锚点漂移，在 rc.3 上复核如下：
+
+| 补丁 | 1.1.72 的漂移 | rc.3 复核 |
 | --- | --- | --- |
-| `#26 MINIMAL_PERSONA_PURGE` | 官方 minimal 预设里 `persistent-shell` 前多了 `tool-fs` 段 | 追加一条以 `tool-fs` 收尾的变体 |
-| `#32 WEB_SURFACE_IDENTITY_NEUTRAL` | `DSH_WEB_URL` 描述由 `Canonical local URL` 改为 `Advertised URL` | 追加两条变体（描述行 + 注释行） |
-| `#40 COMPLETE_PROMPT_KEEP_INJECT` | 官方在 `return` 前新增 `requiredContexts`，`contexts` 语义变化 | 追加一条变体，原样保留 `requiredContexts` 语义 |
-| `#77 REWIND_DROP_SENT_ON_APPEND` | `this.revised.clear()` 改为 `if (this.revised.size > 0) this.revised.clear()` | 追加一条变体 |
-| `#53 WEB_SURFACE_PROHIBITION` | 官方已删除 `Do not start a replacement server…` 整段 | **无需处理**（官方删除 = 该补丁目的自动达成） |
+| `#26 MINIMAL_PERSONA_PURGE` | minimal 预设里 `persistent-shell` 前多了 `tool-fs` 段 | 已收敛进唯一候选（该锚点为 rc.3 唯一命中） |
+| `#32 WEB_SURFACE_IDENTITY_NEUTRAL` | `DSH_WEB_URL` 描述由 `Canonical local URL` 改为 `Advertised URL` | 已收敛进唯一候选 |
+| `#40 COMPLETE_PROMPT_KEEP_INJECT` | 官方在 `return` 前新增 `requiredContexts`，`contexts` 语义变化 | 已收敛进唯一候选 |
+| `#77 REWIND_DROP_SENT_ON_APPEND` | `this.revised.clear()` 改为 `if (this.revised.size > 0) this.revised.clear()` | 已收敛进唯一候选 |
+| `#53 WEB_SURFACE_PROHIBITION` | 官方已删除 `Do not start a replacement server…` 整段 | 该段落官方早已删除，补丁无需存在 |
 
-- `package.json` 的 `dshTarget` 由钉死单版本 `0.2.0-rc.2` 放宽为
-`>=0.2.0-rc.2 <0.3.0-0`，继续只覆盖 dsh 0.2 线，不宣称支持 0.1.x。
-- 发行源整体切到本仓库，见下一节。
+- 验证口径：以 npm 上 `@deepseek-ai/dsh@0.2.1-rc.3` 的依赖闭包建树（291 个官方包），解析出 50 个补丁目标文件，把 77 条补丁按顺序全部跑一遍——**0 条锚点缺口**，无新增失效；再用 `patchStatus` 在干净树上端到端复核，状态只剩 `pending` / `applied` / `missing_file` / `na`，没有 `unmatched`。
+- 发行源整体切到本仓库一节不变，见下一节。
 
 ### 3. 发行源切到本仓库（安装 / 更新不再依赖上游）
 
@@ -80,23 +90,24 @@
 `api.github.com/repos/<REPO>/tags`）与下载（走 `codeload.github.com/<REPO>`）
 因此都落在本仓库，不依赖上游 Releases。
 
-### 4. 新增锚点体检脚本（增量、可选运行）
+### 4. 不做跨版本自动体检
 
-`scripts/check-anchors.mjs`：从 npm 拉官方干净源码，逐条验证 82 个补丁的锚点是否
-还打得进去，输出失效清单。上游缺的正是这个——`optional: true` 的补丁锚点失效时
-**静默跳过**，界面不会报错，用户只会觉得「这功能怎么没了」。
+1.1.72 曾附带一个锚点体检脚本 `scripts/check-anchors.mjs`（连同测试
+`tests/test-p2-check-anchors.mjs`、`release.yml` 里的 “Anchor health check (non-blocking)” 步骤、
+`package.json` 的 `check-anchors` script 入口）：从 npm 拉多个版本的官方源码逐条比对锚点。
+本版**全部移除**——跨版本自动比对正是这次要删掉的自动检测：它让「到底支持哪个版本」
+始终含糊，也让文档不得不跟着每个版本漂。
 
-```sh
-node scripts/check-anchors.mjs                        # 默认对比当前 dshTarget 下限与 latest
-node scripts/check-anchors.mjs 0.2.0-rc.2 0.2.1-alpha.3
-```
+如需自行核对某个宿主，方法就写在文档里、不依赖任何脚本：以 npm 上
+`@deepseek-ai/dsh@0.2.1-rc.3` 的依赖闭包建一棵干净的树，把全部补丁按 `ALL_PATCHES` 顺序跑一遍，
+报出「零改动且无 marker」的补丁即可。
 
 ---
 
 ## 三、本续作明确**不做**的事 / Explicit non-goals
 
 - **不提供、不分发、不新增提示词。** 上游 issue [#27](https://github.com/YuJunZhiXue/dsh-purge/issues/27) 已明确「不再提供提示词，提示词自己寻找」，并把明文提示词从 git 与 npm 双排除（`.gitignore` / `.npmignore`）。本续作沿用该决定：只维护插件引擎与补丁体系，提示词由使用者自行放入 `$DSH_HOME/prompt-inject.md`。
-- **不重构补丁引擎。** 所有兼容性改动均为「追加候选变体」，既有补丁条目、既有 marker、既有回滚链（`.dshpurge.bak`）行为不变。
+- **不重构补丁引擎。** 补丁条目、marker 与回滚链（`.dshpurge.bak`）的行为不变；锚点只收敛到 rc.3 实测命中的候选，不新增猜测性变体。
 - **不改动原作者的任何声明性内容**：`LICENSE`、`docs/notice/*`（违规商用公示证据）、README 的署名与违规商用章节、`docs/redteam-upstream-*` 全部原样保留。
 - **不冒充原作者**：发行源换成自己的仓库，但署名义务指向上游；用户须知里同时给出本仓库（安装/更新）与原仓库（署名/许可）两个链接，不制造「这是原作者新仓库」的误导。
 - **不主张接管上游。** 上游写的是「恢复维护时会在本 README 说明」，即作者留有回来的余地。若上游恢复维护，本仓库应让位。
@@ -109,7 +120,7 @@ node scripts/check-anchors.mjs 0.2.0-rc.2 0.2.1-alpha.3
 上游 master 6c1d638  ←  本续作的全部提交都落在它之后
         │
         ├── cherry-pick #119 / #115 / #110（原作者提交，身份未改写）
-        └── 锚点增量 + dshTarget 放宽 + 体检脚本 + 本声明
+        └── 锚点钉死 rc.3 + dshTarget 收紧 + 删除多版本兼容层 + 本声明
 ```
 
 除上述内容外，本仓库与上游逐字节一致。任何时刻都可以用
@@ -120,7 +131,11 @@ node scripts/check-anchors.mjs 0.2.0-rc.2 0.2.1-alpha.3
 
 *English summary: This repository is a compatibility continuation of YuJunZhiXue/dsh-purge,
 based on upstream master `6c1d638`. It cherry-picks three unreleased upstream fix PRs
-(#119, #115, #110), adds anchor variants for dsh 0.2.1-alpha.3 compatibility, widens
-`dshTarget` within the 0.2 line, and ships an anchor health-check script. All original
-attribution, the MIT LICENSE, and the non-commercial terms remain in force. No prompts are
-distributed (per upstream issue #27). Changes are additive only — no refactors.*
+(#119, #115, #110) and pins the anchors to **dsh 0.2.1-rc.3** only
+(`dshTarget: >=0.2.1-rc.3 <0.2.2-0`): 59 old multi-version candidate variants dropped,
+the five legacy-only patches #21 / #80 / #50 / #53 / #88 removed, the “compat” patch group
+retired, and the cross-version anchor health-check script deleted, because automatic
+cross-version comparison is exactly what this release stops doing. Anchors were verified
+against the pristine rc.3 sources — 291 official packages, 50 patch target files, 77
+patches, zero gaps. All original attribution, the MIT LICENSE, and the non-commercial terms remain in
+force. No prompts are distributed (per upstream issue #27). No refactors.*
