@@ -29,6 +29,10 @@
   <a href="README.md">English</a> | <a href="README.zh-CN.md">中文</a> | <a href="README.ja.md">日本語</a>
 </p>
 
+> **This repository is an asset-preserving continuation of [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge).**
+> The code baseline tracks upstream `master` (currently v1.1.86) and restores the **red-team skill library `skills/redteam/` (23 skills)** and the **prompt sources** that upstream removed from the repository while the plugin code still supports them.
+> All attribution and rights stay with the original author; `LICENSE`, `NOTICE`, attribution requirements and legal notices are kept verbatim. See [COMPAT-NOTICE.md](COMPAT-NOTICE.md) for details.
+
 ## A note from the author
 
 People have been selling this open-source work in the open. After that, the author was asked to come in and talk. No need to spell out the rest. Read between the lines.
