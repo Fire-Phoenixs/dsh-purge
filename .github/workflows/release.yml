@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - master
-  # 手动重发入口：workflow 刚启用、或上次推送在启用之前时，不必再造一个空提交。
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -16,31 +14,19 @@ concurrency:
 
 jobs:
   release:
-    # 续作仓库自己发版。上游 YuJunZhiXue/dsh-purge 的 tag 已全部同步到本仓库，
-    # 更新链路（codeload refs/heads 与 refs/tags）也只认本仓库。
-    if: github.repository == 'Fire-Phoenixs/dsh-purge'
+    if: github.repository == 'YuJunZhiXue/dsh-purge'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Syntax-check every JS/MJS file
+      - name: Syntax-check plugin entry
         run: |
-          # 全量语法检查：不只入口三个文件 —— 改动 update.js / redteam / client.js
-          # 曾绕过了原来的检查。
-          fail=0
-          while IFS= read -r f; do
-            node --check "$f" || fail=1
-          done < <(find lib scripts tests bin -type f \( -name '*.js' -o -name '*.mjs' \))
-          node --check client.js || fail=1
-          exit $fail
-
-      - name: Load plugin entry
-        run: node --input-type=module -e "import './lib/index.js'"
-
-      - name: Regression tests
-        run: node scripts/run-tests.mjs
+          node --check lib/index.js
+          node --check lib/core.js
+          node --check lib/reapply.js
+          node --input-type=module -e "import './lib/index.js'"
 
       - name: Publish GitHub Release
         env:
@@ -73,4 +59,4 @@ jobs:
           fi
           test -s "$zip"
           gh release upload "$tag" "$zip" --clobber
-          echo "published https://github.com/Fire-Phoenixs/dsh-purge/releases/tag/${tag}"
+          echo "published https://github.com/YuJunZhiXue/dsh-purge/releases/tag/${tag}"

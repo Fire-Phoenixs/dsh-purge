@@ -1,82 +1,282 @@
+# 1.1.86
+
+## 中文
+
+- 版本 **1.1.86**。
+- **Web「应用 → 自动重启」后残留 server 导致 EADDRINUSE 起不来（#197，合并 PR #197）**：
+  - `restart-web.js` 把后台 server 的 pid/url 记到 `$DSH_HOME/dsh-purge/web-server-<port>.json`；`killOldServer` 增加按端口兜底，清掉旧版本留下、没有记录的孤儿。
+  - 新增 `lib/bin-preflight.js`：把回收钩子注入宿主 `bin.js` 顶部（跨平台），在 Cordis 激活、webserver 绑端口之前先回收残留；只杀命令行命中 `@deepseek-ai/dsh/lib/bin.js … web` 的进程。
+  - 重启时打印「后台运行、关窗不会停」，避免把提示符返回误判成程序已退出。
+  - 加固：记录里的 pid 拿不到命令行时，必须仍占着该端口才允许杀，防 PID 复用误杀；杀不掉就保留记录下次再试；杀完等待进程真正退出再绑端口。
+- **桌面端点「应用」换包顺序（#198，合并 PR #198）**：
+  - 先按安装根路径且不含 `--type=` 识别并杀掉 Electron main，再扫安装目录其余进程，避免 host 先死、main 还活着弹「host stopped」。
+  - 挪包失败（asar 仍被占用）时补上 `Start-Process`，把原版应用拉起来并写入 `%TEMP%\dsh-purge-desktop.log`，不再留空桌面。
+- 测试：96/96 通过。
+
+## English
+
+- **1.1.86**.
+- **Stale web server after "Apply → auto restart" caused EADDRINUSE on boot (#197, merged PR #197)**:
+  - `restart-web.js` records the background server pid/url in `$DSH_HOME/dsh-purge/web-server-<port>.json`; `killOldServer` now also reclaims by port, catching orphans left by older versions with no record.
+  - New `lib/bin-preflight.js` injects a reclaim hook at the top of the host `bin.js` (cross-platform) so it runs before Cordis activates and before the webserver binds; only processes whose command line matches `@deepseek-ai/dsh/lib/bin.js … web` are killed.
+  - The restart prints "running in the background; closing this window will NOT stop it" so the returned prompt is not mistaken for an exit.
+  - Hardening: when the recorded pid's command line cannot be read, it is killed only if it still listens on that port (guards against PID reuse); a failed kill keeps the record for the next boot; boot waits for the killed process to actually exit before binding.
+- **Desktop asar swap order (#198, merged PR #198)**:
+  - Electron main is identified by install root plus "no `--type=`" and killed first, then the rest of the install tree is swept, so the host no longer dies while main stays alive showing a "host stopped" dialog.
+  - If the asar move fails (still locked), the original app is relaunched and the reason is appended to `%TEMP%\dsh-purge-desktop.log` instead of leaving an empty desktop.
+- Tests: 96/96 pass.
+
+# 1.1.85
+
+## 中文
+
+- 版本 **1.1.85**。
+- **#196**：修复深色模式下部分按钮白底白字、完全看不清的问题。
+  - 根因：宿主暗色主题把 `--dsw-alias-brand-primary` 解析成近白色（`neutral-bluish-50` `#f9fafb`）。插件里凡是"品牌色作底 + 白字"的按钮（设置页的「应用」「保存注入」、演练台的「保存」「检索」「检测连通性」以及各类主按钮）在暗色下就变成一整块白。
+  - 现在暗色（`body[data-ds-dark-theme]`、`[data-theme="dusk"]`）下主按钮统一用绿色实底 `#3d8f68` + 白字，悬停用更深的 `#347a59`；`-webkit-text-fill-color` 一并显式指定，避免宿主强制白字穿透。
+  - 报告里的步骤序号圆点（`.rt-rep-step-no`）同样改为绿底白字。
+  - 浅色模式表现不变；新增 `test/client-dark-theme.test.js` 静态守护这几条暗色规则。
+- 测试：84/84 通过。
+
+## English
+
+- **1.1.85**.
+- **#196**: fix buttons in dark mode rendering as a solid white block (white text on white background).
+  - Root cause: the host dark theme resolves `--dsw-alias-brand-primary` to a near-white token (`neutral-bluish-50`, `#f9fafb`). Every plugin button that used "brand color as background + white text" (settings **Apply**, **Save injection**, drill console **Save**, **Search**, **Test connectivity**, and other primary buttons) turned into a white block in dark mode.
+  - Primary buttons under dark themes (`body[data-ds-dark-theme]`, `[data-theme="dusk"]`) now use a solid green `#3d8f68` with white text, with `#347a59` on hover; `-webkit-text-fill-color` is set explicitly so host-forced white text cannot leak through.
+  - The report step-number dots (`.rt-rep-step-no`) are switched to the same green/white pair.
+  - Light mode is unchanged; added `test/client-dark-theme.test.js` to guard these dark-mode rules.
+- Tests: 84/84 pass.
+
+# 1.1.84
+
+## 中文
+
+- 版本 **1.1.84**。
+- **尾部锚点与子代理审批接管**（接线 `anchor.js` / `subagent-control.js`）：
+  - 锚点段物理追加到 system prompt 的 sections 数组末尾（waterfall 按数组顺序渲染，order 不参与排序），把身份与格式规则放回 recency 位；已有同名段先滤再追加，不会出现两份。
+  - 锚点规则改为跟随操作者语言：中文请求回中文，锚点本身是英文不算语言指令；删掉写死的英文开头句（这是红队模式回答变英文的直接原因）。
+  - 子会话被宿主写成 `approval/policy = "never"` 时改回 `ask`，并在 `approval/request` 瀑布放行，子代理不再"一直被拒"。
+  - 回滚开关：`anchorMode: "off"`、`subagentControl: false`。
+- **红队模式中文化**：模式名与描述、角色名、五阶段攻击链、25 项计分规则与 POC 分类、技能修复说明、环境适配提示、面板与服务端报错、成果报告与成果复现报告全部回中文。
+- **#194**：desktop 端启动后窗口永不显示。
+  - hung-operator 提示改为按内容变更缓存（home + mtime + 已提交修订号），内容没变不再每轮重算约 23KB。
+  - 增加风暴熔断（10 秒 120 次）与慢调用熔断（1.5 秒触发、30 秒冷却），熔断期直接返回缓存文本，不挂死 desktop host。
+  - 同一次 assemble 的重复改写用 WeakMap 去重。
+  - 新增补丁 **#91**：宿主 `code === null || signal` 静默 resolve 前写一条 `[desktop.hostExit]` 到 `%TEMP%\dsh-purge-desktop.log`，保持不弹框但有据可查。
+- **#188（0.2.1-rc.4 专属部分）**：新增 **#89** 沙箱策略去品牌、**#90** skill-badge 描述中文化，扩展 **#32/#53** 的 rc.3 变体与 marker；三条新补丁均为 optional，宿主没有对应文件时静默跳过。
+- 测试：81/81 通过；新增锚点接线与红队文案测试。
+
+## English
+
+- **1.1.84**.
+- **Tail anchor and subagent approval takeover** (wiring `anchor.js` / `subagent-control.js`):
+  - The anchor section is physically appended to the end of the system-prompt sections array (the waterfall renders by array order, not by `order`), putting identity and format rules back in the recency slot; any existing same-named section is filtered first so there is never a duplicate.
+  - Anchor rules now follow the operator's language: a Chinese request gets a Chinese answer, and the anchor being written in English is not a language instruction. The hard-coded English opener was removed (the direct cause of red-team mode answering in English).
+  - When the host writes `approval/policy = "never"` for a child session, it is flipped back to `ask` and allowed in the `approval/request` waterfall, so subagents are no longer refused every time.
+  - Rollback switches: `anchorMode: "off"`, `subagentControl: false`.
+- **Red-team mode localized to Chinese**: mode name and description, role names, the five-stage attack chain, the 25-item scoring rules and POC categories, skill-fix guidance, environment-adaptation hints, panel and server messages, and both the results report and the replay report.
+- **#194**: desktop window never appears after launch.
+  - The hung-operator prompt is now cached by content change (home + mtime + committed revision); an unchanged prompt is no longer rebuilt (~23KB) on every refresh.
+  - Storm breaker (120 calls / 10s) and slow-call breaker (trip at 1.5s, 30s cooldown) return the cached text instead of stalling the desktop host.
+  - Duplicate rewrites within the same assemble call are deduped with a WeakMap.
+  - New patch **#91**: before the host silently resolves `code === null || signal`, append a `[desktop.hostExit]` line to `%TEMP%\dsh-purge-desktop.log` — still no dialog, but no longer invisible.
+- **#188 (0.2.1-rc.4-specific parts)**: new **#89** sandbox-policy brand neutralization and **#90** skill-badge description localization, plus rc.3 variants and markers for **#32/#53**; all three new patches are optional and are skipped silently when the host has no matching file.
+- Tests: 81/81 pass; new coverage for anchor wiring and red-team copy.
+
+# 1.1.83
+
+## 中文
+
+- 版本 **1.1.83**。修复 bug，修复稳定性。
+- **#185**：修复 pnpm 11（DSH 内置 11.2.2）下 `pnpm install` 因 `allowBuilds` 崩溃的问题。
+  - 之前 profile 的 `pnpm-workspace.yaml` 会写入 `dsh-purge@https://...` 这类 URL 键，pnpm 把它当版本联合解析，直接报 `[ERR_PNPM_INVALID_VERSION_UNION] Invalid versions union`。
+  - 现在只写裸包名 `dsh-purge`：pnpm 的 `allowBuilds` 本来就按包名匹配，tarball / git / registry 三种安装形态都放行。
+  - 自愈加强：所有 `dsh-purge@*` 历史键（URL 键、旧截断键 `dsh-purge@https`、`@1.1.81` 之类版本键）一律清掉，只保留裸包名；非 dsh-purge 的键原样保留。
+- **#191**：修复 macOS DSH Desktop（0.2.1-rc.4）启动崩溃 `failed to parse overlay .../cordis.patch.yml`。
+  - 宿主生成的 profile 层 `cordis.patch.yml` 可能整体只有一个空 flow 序列 `[]`，那本身就是一个完整 YAML 文档；再往文件尾追加 `- insert:` 会变成第二个文档，宿主解析直接失败。
+  - 现在写之前先判断数据部分形态：空 flow 序列（`[]`，可带 `---` 前缀）→ **替换** `[]` 整行而不是追加；空文件 / 只有注释 → 直接写 insert 块；正常块序列 → 沿用原来的追加行为。
+  - 非空 flow 序列（宿主或用户自己的内容）认不准就不动，返回 `{ ok: false, wrote: false }`，宁可留着也不写坏。
+
+## English
+
+- **1.1.83**. Bug fixes and stability.
+- **#185**: fix `pnpm install` crashing under pnpm 11 (11.2.2, bundled with DSH) because of `allowBuilds`.
+  - The profile `pnpm-workspace.yaml` used to get a `dsh-purge@https://...` URL key, which pnpm parses as a version union and rejects with `[ERR_PNPM_INVALID_VERSION_UNION] Invalid versions union`.
+  - Now only the bare package name `dsh-purge` is written: pnpm matches `allowBuilds` by package name, so tarball / git / registry installs are all allowed.
+  - Stronger self-healing: every `dsh-purge@*` legacy key (URL keys, truncated `dsh-purge@https`, `@1.1.81`-style version keys) is dropped and only the bare name is kept; non-dsh-purge keys are preserved as-is.
+- **#191**: fix the macOS DSH Desktop (0.2.1-rc.4) startup crash `failed to parse overlay .../cordis.patch.yml`.
+  - The host-generated profile `cordis.patch.yml` may consist of a single empty flow sequence `[]`, which is already a complete YAML document; appending `- insert:` after it creates a second document and the host fails to parse it.
+  - The data shape is now detected before writing: an empty flow sequence (`[]`, optionally `---`-prefixed) → **replace** the `[]` line instead of appending; empty file / comments only → write the insert block; a normal block sequence → the previous append behaviour is kept.
+  - A non-empty flow sequence (host or user content) is left alone and returns `{ ok: false, wrote: false }` — better to skip than to write something broken.
+
+# 1.1.82
+
+## 中文
+
+- 版本 **1.1.82**。修复 bug，修复稳定性。
+- **#180**：修复 profile 的 `pnpm-workspace.yaml` `allowBuilds` 被反复写坏（`dsh-purge@https: true` 畸形键 → `ERR_PNPM_INVALID_VERSION_UNION`，重复键 → `duplicated mapping key`）。
+  - URL 键解析不再被冒号截断；写回含 `://` 的键自动加引号。
+  - 重写只保留精确等于期望键的 `dsh-purge@*`，旧污染键（畸形的、过期的版本/commit URL）自动清掉，不用手工修。
+  - 期望键优先从 profile 的 `pnpm-lock.yaml` 读实际解析的 tarball URL（固定 commit 安装也不再有双 URL 键），读不到才退回 `package.json`。
+  - 重写结果先过最小 YAML 校验（键不重复、round-trip 无损），不过就不写盘；健康文件零写入，启动不再反复重写。
+
+## English
+
+- **1.1.82**. Bug fixes and stability.
+- **#180**: stop rewriting the profile `pnpm-workspace.yaml` `allowBuilds` into garbage (`dsh-purge@https: true` malformed key → `ERR_PNPM_INVALID_VERSION_UNION`; duplicated keys → `duplicated mapping key`).
+  - URL keys no longer truncate at the first colon; keys containing `://` are written back quoted.
+  - Rewrites keep only `dsh-purge@*` keys exactly equal to the wanted set; stale polluted keys (malformed, old version/commit URLs) self-heal away on the next ensure.
+  - The wanted key prefers the tarball URL actually resolved in the profile `pnpm-lock.yaml` (fixed-commit installs no longer get a duplicate URL key); falls back to `package.json`.
+  - Rewritten output passes a minimal YAML check first (no duplicate keys, lossless round-trip); healthy files are never written again, so boot no longer rewrites each run.
+
+# 1.1.81
+
+## 中文
+
+- 版本 **1.1.81**。修复 bug，修复稳定性。
+- **#174**：识别 DSH NEXT 社区桌面（路径、进程、快捷方式、密封 asar）。`DSH_SURFACE=web` 也不再误报；不把任意 `app.asar` 当桌面。
+- **#175**：补 ip / 计分 / settle 单测，删草稿文档和 `.bak`。`npm test` 23 条全过。
+- **#171 / #173**：zip 目录条目和 skills `fs` 导入已在 1.1.80，本版用单测锁住。
+
+## English
+
+- **1.1.81**. Bug fixes and stability.
+- **#174**: detect DSH NEXT desktop (paths, process, shortcuts, sealed asar). Still desktop when `DSH_SURFACE=web`. A random `app.asar` is not treated as the host.
+- **#175**: add ip / score / settle tests; drop draft docs and `.bak`. `npm test` is 23/23 green.
+- **#171 / #173**: zip directory entries and the skills `fs` import shipped in 1.1.80; this release locks them with tests.
+
+# 1.1.80
+
+## 中文
+
+- 版本 **1.1.80**。修复 bug，修复稳定性。
+- **#168**：pnpm 12 的 `allowBuilds` 把 `dsh-purge@codeload...` 也写成 `true`，装别的插件不再留下 `set this to true or false`。
+- **#169**：芯片 / 应用按钮强制系统字体和实色字，不再被宿主图标字体吃掉。
+- **#170**：纯 Node 解 zip 时目录条目建目录，不再写成同名空文件导致 EEXIST。
+- **#172**：`lib/skills.js` 补上 `fs`，#54 软链重叠守卫重新生效。
+- **#176**：写清 **不支持 DSH 0.2.1-rc.3 及更新的 rc**，请退回 **0.2.1-rc.2**。对不上的补丁待应用或跳过，不乱改文件。
+
+## English
+
+- **1.1.80**. Bug fixes and stability.
+- **#168**: pnpm 12 `allowBuilds` also sets `dsh-purge@codeload...` to `true`, so installing other plugins no longer leaves `set this to true or false`.
+- **#169**: chip / Apply buttons force a system font and solid text color so the host icon font cannot hide the label.
+- **#170**: Node zip fallback creates directories for directory entries instead of empty files (no more EEXIST).
+- **#172**: import `fs` in `lib/skills.js` so the #54 symlink overlap guard works again.
+- **#176**: **DSH 0.2.1-rc.3 and newer RCs are not supported.** Stay on **0.2.1-rc.2**. Unmatched patches stay pending or skipped.
+
+# 1.1.79
+
+## 中文
+
+- 版本 **1.1.79**。修复 bug，修复稳定性。
+- **#165**：社区版 DS Bot / DeepSeek Bot 按桌面宿主识别（`ds-bot` profile、Electron asar），不再误报 `set DSH_BASE`。
+- **#166**：pnpm 12 拦 `postinstall` 时补 `allowBuilds`，并写清 `--allow-build=dsh-purge` / `approve-builds`。
+- **#167**：升级后补回 `bundles` + 本体 insert，空芯片不再把启动钮藏掉，1.1.74 有的按钮会回来。
+- 应用/还原/卸载进度条跟 job 阶段；主智能体和子智能体同一份注入、权限和能力协议。
+- 新建会话不再把 `dsh-purge` 芯片甩到行尾。
+
+## English
+
+- **1.1.79**. Bug fixes and stability.
+- **#165**: community DS Bot / DeepSeek Bot is a desktop host (`ds-bot` profile, Electron asar); no more false `set DSH_BASE`.
+- **#166**: pnpm 12 skipped `postinstall`; write `allowBuilds` and document `--allow-build=dsh-purge`.
+- **#167**: restore `bundles` + body insert after upgrade so the 1.1.74 button comes back.
+- Apply / revert / uninstall progress follows the job; main and subagents share inject, permission, and capability text.
+- New-session no longer shoves the `dsh-purge` chip to the far right.
+
+# 1.1.78
+
+## 中文
+
+- 版本 **1.1.78**。修复 bug：停用/卸载后无法新建会话。
+- **#108**：停用或卸载时把 `agent-preset-registry.selectedDefault` 从 `redteam` 改回 `standard`，并清掉 `$DSH_HOME/.agent-presets/redteam`。热重载不会冲掉用户设的红队默认。
+- 卸载同时处理 `dsh.profile.bundles` / `dsh.profile.plugins`，桌面 profile 不再残留 `dsh-purge`。
+
+## English
+
+- **1.1.78**. Bug fix: new sessions after disable/uninstall.
+- **#108**: on disable or uninstall, reset `agent-preset-registry.selectedDefault` from `redteam` to `standard`, and remove `$DSH_HOME/.agent-presets/redteam`. Hot reload keeps a user-chosen redteam default.
+- Uninstall also strips `dsh.profile.bundles` / `dsh.profile.plugins`.
+
+# 1.1.77
+
+## 中文
+
+- 版本 **1.1.77**。修复 bug，修复稳定性。
+- 修长红队任务仍打公网：`渗透测试` / `红队` / `打点` / `拿站` 纳入门禁；正文按窗扫到 256KB，目标写在后半段也能拦。
+- 修后续步骤漏拦：每一步看工具参数，`tools/pre-execute` 遇到公网 IP/域名直接停轮。
+- 长文正则按窗扫，避免整篇回溯把事件循环卡死。
+
+## English
+
+- **1.1.77**. Bug fixes and stability.
+- Long red-team tasks no longer reach the public internet: `渗透测试` / red-team / 打点 / 拿站 are gated; the body is scanned in windows up to 256KB.
+- Later steps are gated too: tool arguments are checked, and `tools/pre-execute` stops on a public IP or name.
+- Long-text regex runs in windows so a huge paste cannot stall the event loop.
+
+# 1.1.76
+
+## 中文
+
+- 版本 **1.1.76**。适配只走 pnpm 的机器：在 profile 目录 `pnpm add` codeload 压缩包即可，`postinstall` 自动把 `dsh-purge` 写进 `bundles`。
+- 安装地址改成 `codeload.github.com`，避开 `github.com/archive` 的 302（pnpm 会 `fetch failed`）。不要 `pnpm add dsh-purge`（npm 仓库没有这个名字）。
+
+## English
+
+- **1.1.76**. pnpm-only hosts: `pnpm add` the codeload tarball inside the profile; `postinstall` writes `dsh-purge` into `bundles`.
+- Install URL is `codeload.github.com` so pnpm does not die on the `github.com/archive` 302. Do not `pnpm add dsh-purge` — that name is not on the npm registry.
+
+# 1.1.75
+
+## 中文
+
+- 版本 **1.1.75**。修 Hub 市场一键安装报 `already queued: dsh-purge`：`cordis.patch.yml` 不再把已经在 bundles 里的本体再 insert 一遍。
+- README 把安装写成三步：只用 GitHub 压缩包命令，不走插件市场 / `github:` / npm。
+
+## English
+
+- **1.1.75**. Fix Hub one-click `already queued: dsh-purge`: the bundle patch no longer inserts the plugin that is already in `bundles`.
+- README install is three steps: GitHub tarball only; skip the plugin market / `github:` / npm.
+
+# 1.1.74
+
+## 中文
+
+- 版本 **1.1.74**，优化若干拦截与加载 bug。适配 DSH **0.2.1-rc.2**（0.2.0 仍可用）。
+- 修靶场门禁：域名先解析再判 IP，不再靠 `.lab` / `.htb` 后缀放行；`hosts` 指到公网、解析失败、混有公网，一律拦。
+- 修身份绕过：`169.254` 云元数据不再当靶场；`::ffff:公网` 拆开再判；攻击句不写目标不再放行。
+- 修 DSH 0.2.1 预设加载：对象 schema 补 `additionalProperties`，装过的 redteam 预设清掉残留 `toolFilter`。
+- 修演练台被改成英文：中文页签收回。
+- 禁止制作外挂：会话门口硬拦，提示词 Rule 1 改为禁止。
+
+## English
+
+- **1.1.74**, bug-fix release. Target DSH **0.2.1-rc.2** (0.2.0 still works).
+- Lab gate: resolve first, then allow only private IPs. Suffixes are not an allow list.
+- Close identity holes: drop link-local metadata, unwrap IPv4-mapped IPv6, deny unnamed attack tasks.
+- DSH 0.2.1 preset load: seal object schemas; strip leftover `toolFilter`.
+- Restore Chinese drill-console tabs.
+- Game cheats are forbidden at the session gate.
+
 # 1.1.73
 
 ## 中文
 
-- 版本 **1.1.73**。这是 [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge) 的**兼容性续作**，基于上游 `master` @ `6c1d638`，只做增量更新；一切署名与权利归原作者。
-- 目标版本钉死到 dsh **0.2.1-rc.3**：`dshTarget` 由 `>=0.2.0-rc.2 <0.3.0-0` 改为 `>=0.2.1-rc.3 <0.2.2-0`。
-- 删除兼容性自动检测机制：`scripts/check-anchors.mjs` 与测试 `tests/test-p2-check-anchors.mjs`、`release.yml` 里的 “Anchor health check (non-blocking)” 步骤、`package.json` 的 `check-anchors` 脚本入口一并移除。
-- 删除五条只为旧版本/旧文案服务的补丁（补丁总数 82 → 77）：
-  - #21 `BASH_TIMEOUT_RESTORE`：只用于把更早版本插件写坏的 `timeoutMs: 600000` 改回 60000；
-  - #80 `MINIMAL_OFFICIAL_TOOLSET`：只用于撤掉更早版本插件往 minimal 预设里加的 fs/web 工具；
-  - #50 `SESSION_REFERENCE_FRAMING_NEUTRAL`：目标是「把跨会话引用改回 0.1.7 的 untrusted 措辞」，rc.3 官方原文本就已经是 untrusted；
-  - #53 `WEB_SURFACE_PROHIBITION`：`You are interacting with the user through the local web GUI…` 与 `Do not start a replacement server…` 两段官方在 rc.3 已删除/改写，补丁目的自动达成；
-  - #88 `HUNG_PROMPT_STRICT_NEEDLE`：只补一个 `[dsh-purge-88]` 标记，严格针逻辑已并入 #87 的候选。
-  - 以上在干净的 0.2.1-rc.3 官方源码上命中数均为 0。
-- 收敛多版本锚点候选：21 条补丁里共删除 59 个候选变体——这些候选在 0.2.1-rc.3 官方源码上零命中，原本是给 0.1.5 / 0.1.7 / 0.2.0 / 0.2.1-alpha 等旧版本准备的。现在每条补丁只保留在 rc.3 上实测命中的锚点；命中判定用顺序模拟（后一个候选可能匹配前一个候选的产物）。
-- 取消「兼容」分组：#40 `COMPLETE_PROMPT_KEEP_INJECT` 的 layer 从「0.1.5 兼容」改回「提示词」；#47 `ANTHROPIC_OAUTH_NO_CLAUDE_IDENTITY`、#49 `ANTHROPIC_OAUTH_CLI_NEUTRAL` 的 layer 从「0.2.0 兼容」改到「代码」。`client.js` 的 `group.compat` / `group.dsh20` 文案、`0.1.5 兼容` / `0.2.0 兼容` 层名映射、`GROUP_ORDER` 里的 `compat` / `dsh20` 一并删除。补丁分组只剩 提示词 / 代码 / 工具 三种（外加引擎）。
-- 不再静默跳过：目标文件读到但锚点对不上时，状态由 `skipped` 改为 `unmatched`（界面显示「没对上」），`applyPatches` 的汇总状态同样改为 `unmatched`。
-- 验证结果：以 npm 上 `@deepseek-ai/dsh@0.2.1-rc.3` 的依赖闭包建树（291 个官方包），解析出 50 个补丁目标文件，把 77 条补丁按顺序全部跑一遍——**0 条锚点缺口**，无新增失效；另外用 `patchStatus` 在干净树上端到端跑一遍，状态只剩 `pending` / `applied` / `missing_file` / `na`（没有 `unmatched`）。`node --check` 与仓库回归测试全绿。
-- **升级提示**：从 1.1.72 及更早版本升级时，宿主里若还残留插件写的 `timeoutMs: 600000`，或 minimal 预设里还残留 fs/web 工具，因 #21 / #80 已删，不会再被自动清掉——需手动清理这两处，或先用旧版本回滚一次再升级。
-- 本版改动范围：`package.json`、`lib/core.js`（锚点与层名收敛）、`client.js`（分组文案）、`tests/`、`.github/workflows/release.yml`、README 中英、`COMPAT-NOTICE.md`、本说明。**未改动**：补丁引擎逻辑、`LICENSE`、`docs/notice/*`、上游署名与违规商用公示章节、红队演练台与技能。
-- 提示词按上游 issue #27 的决定**不提供、不新增**。
+- 版本 **1.1.73**，适配 DSH **0.2.1-rc.2**（0.2.0 仍可用）。
+- 0.2.1 兼容已落地：`{{cwd}}` 静态回退、补丁 #40、`toolFilter` 删除、`dsh-tools` 解析、hostFs fd 直通、桌面换包不自杀、`file:` 归档更新、Ctrl+Enter steer。
+- 界面操作文案补齐英文（演练台、清洗面板、补丁表、计分/技能指引）；`zh` 语言包与模型提示词保持中文。靶场默认拦截的 `own.hint` 仍按本仓库策略。
+- 随包技能 `paper-autopilot` + `npm run install:skill`。
+- 红队证据账本：`claimed → observed` 核实链、`ResidualUnknown`、8 个 `redteam_evidence_*` / `redteam_unknown_*` 工具。
 
 ## English
 
-- **1.1.73**. A **compatibility continuation** of [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge), based on upstream `master` @ `6c1d638`. Additive changes only; all attribution and rights stay with the original author.
-- Target pinned to dsh **0.2.1-rc.3**: `dshTarget` moves from `>=0.2.0-rc.2 <0.3.0-0` to `>=0.2.1-rc.3 <0.2.2-0`.
-- Automatic compatibility detection removed: `scripts/check-anchors.mjs` and `tests/test-p2-check-anchors.mjs`, the “Anchor health check (non-blocking)” step in `release.yml`, and the `check-anchors` script entry in `package.json` are all gone.
-- Five patches dropped — they only served values or wording left by older versions (patch count 82 → 77):
-  - #21 `BASH_TIMEOUT_RESTORE`: only rewrote `timeoutMs: 600000`, written by older plugin builds, back to 60000;
-  - #80 `MINIMAL_OFFICIAL_TOOLSET`: only removed fs/web tools that older builds had added to the minimal preset;
-  - #50 `SESSION_REFERENCE_FRAMING_NEUTRAL`: its goal was to reword cross-session references to the 0.1.7 untrusted phrasing, which rc.3 already ships natively;
-  - #53 `WEB_SURFACE_PROHIBITION`: both target paragraphs (`You are interacting with the user through the local web GUI…`, `Do not start a replacement server…`) are gone or rewritten in rc.3, so the patch has nothing left to do;
-  - #88 `HUNG_PROMPT_STRICT_NEEDLE`: only stamped a `[dsh-purge-88]` marker; the strict-needle logic already lives in #87's surviving candidate.
-  - All of them match zero times in the pristine 0.2.1-rc.3 sources.
-- Multi-version anchor candidates collapsed: 59 candidate variants removed across 21 patches — all zero-hit against the 0.2.1-rc.3 sources and written for 0.1.5 / 0.1.7 / 0.2.0 / 0.2.1-alpha. Each patch now keeps only the anchors that actually matched on rc.3; matching is decided by sequential simulation (a later candidate may match the output of an earlier one).
-- The “compat” grouping is gone: the layer of #40 `COMPLETE_PROMPT_KEEP_INJECT` returns from “0.1.5 compat” to “prompt”; #47 `ANTHROPIC_OAUTH_NO_CLAUDE_IDENTITY` and #49 `ANTHROPIC_OAUTH_CLI_NEUTRAL` move from “0.2.0 compat” to “code”. The `group.compat` / `group.dsh20` strings in `client.js`, the `0.1.5 兼容` / `0.2.0 兼容` layer-name mapping, and `compat` / `dsh20` in `GROUP_ORDER` are deleted. Patch groups are now prompt / code / tools only, plus the engine.
-- No more silent skips: when a target file is found but an anchor does not match, the status is `unmatched` instead of `skipped` (shown as “没对上” in the dock), and the `applyPatches` summary uses the same status.
-- Verified against npm `@deepseek-ai/dsh@0.2.1-rc.3`: 291 official packages resolved into a tree, 50 patch target files found, all 77 patches run in order — **zero anchor gaps**, no new breakage. An end-to-end `patchStatus` run on the clean tree reports only `pending` / `applied` / `missing_file` / `na` (no `unmatched`). `node --check` and the repository test suite pass.
-- **Upgrade note**: coming from 1.1.72 or older, a leftover `timeoutMs: 600000` written by the plugin, or fs/web tools left in the minimal preset, is no longer cleaned up automatically now that #21 / #80 are gone — clean those two spots by hand, or roll back once with the older version before upgrading.
-- Changed in this release: `package.json`, `lib/core.js` (anchor and layer collapse), `client.js` (group strings), `tests/`, `.github/workflows/release.yml`, both READMEs, `COMPAT-NOTICE.md`, these notes. **Untouched**: patch engine logic, `LICENSE`, `docs/notice/*`, upstream attribution and non-commercial sections, the red-team workbench and skills.
-- No prompts are added or distributed, per upstream issue #27.
-
-# 1.1.72
-
-## 中文
-
-- 版本 **1.1.72**。这是 [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge) 的**兼容性续作**，基于上游 `master` @ `6c1d638`，只做增量更新；一切署名与权利归原作者。
-- 合入上游三个一直没被接收的修复 PR（按原提交 cherry-pick，提交者身份未改写）：
-  - #119（@1723582064）：`repairOfficialCliAfterUnpack` 存 `.bak` 漏 `await`，会以 `dsh: fatal load failure` 退出、并让回滚拿到补丁后的字节。
-  - #115（@lnuxe）：`{{cwd}}` 未注册的 harness 上用静态句兜底，否则对话起不来。
-  - #110（@Minervaowl7）：停用时交还默认预设指针；卸载清理同时认 `dsh.profile.bundles`。
-- 新增 dsh **0.2.1-alpha.3** 的锚点变体（只在既有 `replacements` 数组**追加**候选，不改既有条目、不动 marker 与回滚链）：
-  - #26 `MINIMAL_PERSONA_PURGE`：官方 minimal 预设中 persona 之后多了 `tool-fs`，锚点尾部由 `persistent-shell` 改为 `tool-fs`。
-  - #32 `WEB_SURFACE_IDENTITY_NEUTRAL`：`DSH_WEB_URL` 描述由 `Canonical local URL` 改成 `Advertised URL`，另附注释行变体。
-  - #40 `COMPLETE_PROMPT_KEEP_INJECT`：官方在 `return` 前新增 `requiredContexts`，`contexts` 在 `runtimeContextSuppressed` 时改为「只保留 required 项」；变体原样保留该语义。
-  - #77 `REWIND_DROP_SENT_ON_APPEND`：`this.revised.clear()` 加了 `size > 0` 守卫，锚点跟进。
-- `dshTarget` 由钉死单版本改为 `>=0.2.0-rc.2 <0.3.0-0`（仍只覆盖 dsh 0.2 线，不宣称支持 0.1.x）。
-- **发行源整体切到本仓库**：`dsh.install` 三个地址、`repository`/`homepage`/`bugs`、`lib/update.js` 的 `REPO`、`lib/redteam/ui.js` 的默认仓库兜底、`client.js` 用户须知链接、`release.yml` 发版仓库门、README 的安装/唤起/clone/tarball/Releases 链接全部改指 `Fire-Phoenixs/dsh-purge`。上游 73 个 tag 已同步过来，版本列表（`api.github.com/.../tags`）与下载（`codeload.github.com/...`）都不再依赖上游。**署名性质的上游链接全部保留**：LICENSE 出处、署名要求章节、违规商用公示、`docs/redteam-upstream-*`、README 的 `upstream` 徽章、用户须知里的原作者仓库行。
-- 新增 `scripts/check-anchors.mjs`：从 npm 拉官方干净源码，按 `ALL_PATCHES` 顺序跑一遍，报出「零改动且无 marker」的补丁——即静默失效的那些。用法：`node scripts/check-anchors.mjs [旧版本] [新版本]`；有新增强锚点缺口时退出码为 1，可进 CI。
-- 本版改动范围：`lib/core.js`（追加锚点变体）、`package.json`、README 中英各一段、`COMPAT-NOTICE.md`、`scripts/check-anchors.mjs`、本说明。**未改动**：补丁引擎逻辑、`LICENSE`、`docs/notice/*`、上游署名与违规商用公示章节、红队演练台与技能。
-- 提示词按上游 issue #27 的决定**不提供、不新增**。
-
-## English
-
-- **1.1.72**. A **compatibility continuation** of [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge), based on upstream `master` @ `6c1d638`. Additive changes only; all attribution and rights stay with the original author.
-- Cherry-picks three upstream fix PRs that were never merged (identities preserved):
-  - #119 (@1723582064): missing `await` when writing the `.bak` made the host exit with `dsh: fatal load failure` and made rollback capture post-patch bytes.
-  - #115 (@lnuxe): fall back to a static sentence when `{{cwd}}` is unregistered; otherwise chats fail to start.
-  - #110 (@Minervaowl7): hand back the default-preset pointer on disable; uninstall cleanup also recognises `dsh.profile.bundles`.
-- Adds dsh **0.2.1-alpha.3** anchor variants by **appending** candidates to existing `replacements` arrays only — no existing entry, marker or rollback chain is touched:
-  - #26 `MINIMAL_PERSONA_PURGE`: the official minimal preset now inserts `tool-fs` right after persona, so the anchor tail moves from `persistent-shell` to `tool-fs`.
-  - #32 `WEB_SURFACE_IDENTITY_NEUTRAL`: the `DSH_WEB_URL` description changed from `Canonical local URL` to `Advertised URL`, plus a comment-line variant.
-  - #40 `COMPLETE_PROMPT_KEEP_INJECT`: upstream added `requiredContexts` before `return` and changed what `contexts` holds under `runtimeContextSuppressed`; the variant preserves that semantics verbatim.
-  - #77 `REWIND_DROP_SENT_ON_APPEND`: `this.revised.clear()` gained a `size > 0` guard.
-- `dshTarget` widened from a single pinned version to `>=0.2.0-rc.2 <0.3.0-0` (0.2 line only; 0.1.x is still not claimed).
-- **Distribution source moved to this repository**: the three `dsh.install` URLs, `repository`/`homepage`/`bugs`, `REPO` in `lib/update.js`, the default-repo fallback in `lib/redteam/ui.js`, the notice link in `client.js`, the release-workflow repository gate, and every README install / deep-link / clone / tarball / Releases link now point at `Fire-Phoenixs/dsh-purge`. All 73 upstream tags were mirrored, so both the version list (`api.github.com/.../tags`) and downloads (`codeload.github.com/...`) no longer depend on upstream. **Attribution links to upstream are all preserved**: LICENSE provenance, the attribution section, the non-commercial notice, `docs/redteam-upstream-*`, the README `upstream` badge, and the original-author line in the welcome notice.
-- New `scripts/check-anchors.mjs`: pulls pristine official sources from npm, runs `ALL_PATCHES` in order, and reports patches with zero changes and no marker — the ones that fail silently. Usage: `node scripts/check-anchors.mjs [old] [new]`; exits 1 on new hard-anchor gaps, so it can gate CI.
-- Changed files: `lib/core.js` (appended anchor variants), `package.json`, one paragraph in each README, `COMPAT-NOTICE.md`, `scripts/check-anchors.mjs`, these notes. **Untouched**: patch engine logic, `LICENSE`, `docs/notice/*`, upstream attribution and non-commercial sections, the red-team workbench and skills.
-- No prompts are added or distributed, per upstream issue #27.
+- **1.1.73**, target DSH **0.2.1-rc.2** (0.2.0 still works).
+- 0.2.1 compatibility in-tree: `{{cwd}}` fallback, patch #40, drop `toolFilter`, host `dsh-tools` resolve, hostFs fd pass-through, desktop helper self-kill fix, `file:` archive update, Ctrl+Enter steer.
+- Operator-facing UI copy is English; `zh` locale and model prompts stay Chinese. Lab default-deny `own.hint` is unchanged.
+- Bundled `paper-autopilot` skill + `npm run install:skill`.
+- Red-team evidence ledger: claimed→observed verification, ResidualUnknown, eight `redteam_evidence_*` / `redteam_unknown_*` tools.
 
 # 1.1.71
 
