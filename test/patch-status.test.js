@@ -38,14 +38,20 @@ test("rollupPatchStatus: pattern 还在 → pattern_not_found（可以打）", (
   assert.equal(rollupPatchStatus({ ...base, notFound: 1 }), "pattern_not_found");
 });
 
-test("rollupPatchStatus: 有文件真的写成功就仍算 applied，不制造半打假告警", () => {
-  assert.equal(rollupPatchStatus({ ...base, applied: 1, drifted: 1 }), "applied");
+test("rollupPatchStatus: 多文件补丁只要有一个文件漂移，整体就不是 applied", () => {
+  // 1.1.91 把 drifted 提到 applied 之前（rollupPatchStatus 里有明确注释，展示层
+  // rollupDisplayStatus 也是「有一条漂移就不是干净绿」）。旧的 applied 压过 drifted
+  // 是 1.1.86 行为：多文件补丁一半打上、一半静默失效时状态页仍绿 —— 上游已推翻。
+  assert.equal(rollupPatchStatus({ ...base, applied: 1, drifted: 1 }), "drifted");
+  // 但「个别文件本来就不含这段代码」不算漂移（走 notFound），不能制造半打假告警。
+  assert.equal(rollupPatchStatus({ ...base, applied: 1, notFound: 1 }), "applied");
 });
 
-test("rollupPatchStatus: 已经落盘过的补丁仍算 already，不因个别文件漂移翻红", () => {
-  // 多文件补丁里个别文件本来就不含这段代码（另一个构建产物），
-  // 这种"假漂移"不能盖掉已经打上的部分。
-  assert.equal(rollupPatchStatus({ ...base, already: 1, drifted: 1 }), "already");
+test("rollupPatchStatus: 已落盘 + 真漂移 → drifted，不因曾经打上过就翻绿", () => {
+  // 同上：already 也压不过真漂移（drifted>0 说明那份官方原文被改写/搬走了）。
+  assert.equal(rollupPatchStatus({ ...base, already: 1, drifted: 1 }), "drifted");
+  // 只有「这一份文件本来就没有这段代码」（notFound）+ layoutSoft，才继续算 already。
+  assert.equal(rollupPatchStatus({ ...base, already: 1, notFound: 1, layoutSoft: true }), "already");
 });
 
 test("rollupPatchStatus: 写错误优先于 applied，不能把 EACCES 吞成绿", () => {
@@ -170,6 +176,32 @@ test("applyReplacementsToText: 全部字面量 pattern 二次应用不叠加", (
     if (twice.text !== once.text) offenders.push(`#${p.id} ${p.name}`);
   }
   assert.deepEqual(offenders, [], `这些补丁二次应用还在变：${offenders.join(", ")}`);
+});
+
+test("插入型补丁 #92/#93：连续 apply 三次必须收敛（insertProbe 守卫）", () => {
+  // 这两个补丁的 pattern 会原样保留在产物里（#92 前两行就是 pattern；#93 的 replace
+  // 末尾又把 claimDesktopSingleInstance 调用拼回去），没有 insertProbe 时每次 apply
+  // 都会再插一遍：实测 121→635→1149→1663（#93 70→1703→3336→4969），正是
+  // 「每次 apply +841 字符、永不收敛」那类事故。这里锁死「第 2、3 次 changed=false 且长度不变」。
+  for (const id of [92, 93]) {
+    const p = ALL_PATCHES.find((x) => x.id === id);
+    assert.ok(p, `找不到 #${id}`);
+    const reps = (p.replacements || []).filter((r) => r.pattern && !(r.pattern instanceof RegExp));
+    assert.ok(reps.length > 0, `#${id} 应当有字面量 pattern`);
+    assert.ok(
+      reps.every((r) => typeof r.insertProbe === "string" && r.insertProbe.length > 0),
+      `#${id} 的插入型 replacement 必须声明 insertProbe，否则重复 apply 会无限追加`,
+    );
+    const src = reps.map((r) => String(r.pattern)).join("\n");
+    let text = applyReplacementsToText(src, p, "").text;
+    const afterFirst = text.length;
+    for (let pass = 2; pass <= 3; pass += 1) {
+      const r = applyReplacementsToText(text, p, "");
+      assert.equal(r.changed, false, `#${id} 第 ${pass} 次 apply 仍 changed=true（会无限膨胀）`);
+      assert.equal(r.text.length, afterFirst, `#${id} 第 ${pass} 次 apply 长度从 ${afterFirst} 变成 ${r.text.length}`);
+      text = r.text;
+    }
+  }
 });
 
 test("applyReplacementsToText: 没有残留 pattern 时 changed=false", () => {

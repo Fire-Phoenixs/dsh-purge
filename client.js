@@ -138,12 +138,12 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"dock.unauthorized": "未授权",
 			"welcome.title": "用户须知",
 			"welcome.lead": "首次安装本插件时请阅读以下说明。确认后本窗不再弹出。",
-			"welcome.warn": "本插件免费开源。任何背着作者私自售卖、付费倒卖或借本项目盈利的行为，作者将依法追究法律责任。",
+			"welcome.warn": "本插件免费开源。任何未署名的付费转售、倒卖或商业牟利行为，维护团队将依法追究责任。",
 			"welcome.body": "dsh-purge 是 DeepSeek Harness 的本机网络安全红队评测与清洗插件：在受控本机环境中调整提示词与补丁、做授权范围内的演练台操作。项目免费、非营利，源码仓库：",
-			"welcome.repo": "https://github.com/YuJunZhiXue/dsh-purge",
+			"welcome.repo": "https://github.com/Fire-Phoenixs/dsh-purge",
 			"welcome.ban1": "禁止将本项目用于未授权的网络攻击、入侵、窃取数据、破坏系统或任何违法犯罪。",
-			"welcome.ban2": "禁止商业售卖、付费倒卖、黑灰产牟利，以及隐瞒作者的营利性再分发。",
-			"welcome.ban3": "使用者须自行遵守所在地法律法规与平台规范；违法后果由行为人自行承担，与作者无关。",
+			"welcome.ban2": "禁止商业售卖、付费倒卖、黑灰产牟利，以及未署名的营利性再分发。",
+			"welcome.ban3": "使用者须自行遵守所在地法律法规与平台规范；违法后果由行为人自行承担，与维护团队无关。",
 			"welcome.bans": "禁止事项",
 			"welcome.check": "我已阅读并理解上述用户须知，同意合法合规使用。",
 			"welcome.ok": "我已知晓并继续",
@@ -499,11 +499,11 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"dock.unauthorized": "Unauthorized",
 			"welcome.title": "User notice",
 			"welcome.lead": "Please read this on first install. After you confirm, it will not appear again.",
-			"welcome.warn": "This plugin is free and open source. Anyone who sells, resells, or profits from it behind the author's back may face legal action.",
+			"welcome.warn": "This plugin is free and open source. Unattributed paid resale, resale, or commercial exploitation may result in legal action by the maintainers.",
 			"welcome.body": "dsh-purge is a local DeepSeek Harness plugin for security evaluation and cleaning: adjust prompts and patches on a machine you control, and use the drill console only within authorized scope. It is free and non-profit. Repository:",
-			"welcome.repo": "https://github.com/YuJunZhiXue/dsh-purge",
+			"welcome.repo": "https://github.com/Fire-Phoenixs/dsh-purge",
 			"welcome.ban1": "Do not use this project for unauthorized attacks, intrusion, data theft, sabotage, or any illegal activity.",
-			"welcome.ban2": "Do not commercially sell, resell, or profit from gray-market use, or redistribute for profit without the author.",
+			"welcome.ban2": "Do not commercially sell, resell, or profit from gray-market use, or redistribute for profit without attribution.",
 			"welcome.ban3": "You must follow local law and platform rules; illegal use is solely your responsibility.",
 			"welcome.bans": "Prohibitions",
 			"welcome.check": "I have read and understand this notice and will use the plugin lawfully.",
@@ -1568,6 +1568,7 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 		}
 
 		function PurgifySection() {
+			useEffect(() => () => stopRestartPolling(), []);
 			const t = useT();
 			const tRef = useRef(t);
 			tRef.current = t;
@@ -1848,12 +1849,12 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 						},
 					}));
 					const applyContent = action === "apply" ? readPromptBox() : "";
-					fetch("/dsh-purge/" + action, {
+					/* 走 apiJson：apply/revert 本来就配了 240s/120s 超时，裸 fetch 会挂死在半路。 */
+					apiJson("/dsh-purge/" + action, {
 						method: "POST",
 						headers: { "content-type": "application/json" },
 						body: JSON.stringify(action === "apply" ? { content: applyContent } : {}),
 					})
-						.then((r) => r.json())
 						.then((d) => {
 							if (ticket !== actionTicket.current) return;
 							if (responseNeedsPrompt(d)) {
@@ -1933,12 +1934,11 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 					setAskRestart(false);
 					setNotice({ kind: "idle", text: "" });
 					const content = readPromptBox();
-					fetch("/dsh-purge/override", {
+					apiJson("/dsh-purge/override", {
 						method: "POST",
 						headers: { "content-type": "application/json" },
 						body: JSON.stringify({ content: content }),
 					})
-						.then((r) => r.json())
 						.then((d) => {
 							if (ticket !== actionTicket.current) return;
 							if (!d.ok || responseNeedsPrompt(d)) {
@@ -2006,6 +2006,7 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 			}, [defaultOverride, t]);
 
 			const waitHostAfterUninstall = useCallback((tr) => {
+				stopRestartPolling();
 				const started = Date.now();
 				const ping = () => {
 					fetch("/", { cache: "no-store", credentials: "same-origin" })
@@ -2028,9 +2029,9 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 						setUninstallBusy(false);
 						return;
 					}
-					setTimeout(ping, 500);
+					restartPollTimer = setTimeout(ping, 500);
 				};
-				setTimeout(ping, 800);
+				restartPollTimer = setTimeout(ping, 800);
 			}, []);
 
 			const doUninstall = useCallback(() => {
@@ -2905,7 +2906,15 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 			window.location.reload();
 		}
 
+		/* 重启/卸载后的 500ms 轮询共用一个定时器：组件卸载或流程取消时要能停掉，
+		   否则面板关掉之后它还会跑到 90 秒超时。 */
+		let restartPollTimer = 0;
+		function stopRestartPolling() {
+			if (restartPollTimer) { clearTimeout(restartPollTimer); restartPollTimer = 0; }
+		}
+
 		function waitForRestart(setNotice, setBusy, t) {
+			stopRestartPolling();
 			const started = Date.now();
 			// 必须先看到旧进程掉线，再等新进程就绪；否则同进程立刻 200 会被当成「重启成功」又弹重启。
 			let sawDown = false;
@@ -2931,9 +2940,9 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 					setBusy(false);
 					return;
 				}
-				setTimeout(ping, 500);
+				restartPollTimer = setTimeout(ping, 500);
 			};
-			setTimeout(ping, 800);
+			restartPollTimer = setTimeout(ping, 800);
 		}
 
 		let restartOnce = false;
@@ -3010,6 +3019,7 @@ body[data-ds-dark-theme] .rt-rep-step-no,.dshp-dock[data-theme="dusk"] .rt-rep-s
 		}
 
 		function SettingsRoot(props) {
+			useEffect(() => () => stopRestartPolling(), []);
 			const t = typeof props.t === "function" ? props.t : ((key) => key);
 			const [theme, setTheme] = useState(readTheme);
 			useEffect(() => {
@@ -4351,11 +4361,34 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       try { return String(window.location.hash || '') === '#redteam-full' } catch { return false }
     }
 
-    const api = (req) => fetch('/redteam/api', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(req),
-    }).then((res) => res.json())
+    /* 与宿主半侧其它接口同一套约定：有超时、判 res.ok、非 JSON 响应给出可读错误。
+       直接 res.json() 时后端回 HTML/空体只会抛 "Unexpected token '<'"，状态码也丢了。 */
+    const API_TIMEOUT_MS = 120000
+    const api = (req) => {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT_MS)
+      return fetch('/redteam/api', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(req),
+        signal: ctrl.signal,
+      })
+        .then((res) => res.text().then((text) => {
+          let data = null
+          try { data = text ? JSON.parse(text) : null } catch { throw new Error(res.status + ' non-json: ' + text.slice(0, 120)) }
+          if (!res.ok) throw new Error((data && data.error) || (res.status + ' ' + res.statusText))
+          return data
+        }))
+        .finally(() => clearTimeout(timer))
+    }
+    /* 每次加载取号，异步回来先比号：切靶标后旧响应直接丢弃，别盖掉新靶标的数据。 */
+    const useLoadSeq = () => {
+      const ref = React.useRef(0)
+      return {
+        take: () => ++ref.current,
+        live: (my) => my === ref.current,
+      }
+    }
 
     let ui = { open: true, tab: 'assets' }
     const subs = new Set()
@@ -4395,15 +4428,30 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       'vuln-scan': '漏洞发现', exploit: '漏洞利用', internal: '内网渗透',
     }
 
-    const fmt = (s) => (s ? String(s).replace('T', ' ').slice(0, 16) : '—')
+    /* 服务端时间一律是 toISOString()（UTC），直接截串会让东八区早 8 小时。 */
+    const pad2 = (n) => String(n).padStart(2, '0')
+    const asLocal = (s) => {
+      const d = new Date(s)
+      return Number.isNaN(d.getTime()) ? null : d
+    }
+    const fmt = (s) => {
+      if (!s) return '—'
+      const d = asLocal(s)
+      if (d === null) return String(s).replace('T', ' ').slice(0, 16)
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate())
+        + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes())
+    }
     const shotCache = new Map()
     const shotLoading = new Map()
+    /* base64 常驻内存：只留最近 200 张，避免跨靶标无限累积。 */
+    const SHOT_CACHE_LIMIT = 200
     const shotSrc = (eng, id) => shotCache.get(eng + ':' + id) || null
     const loadShot = (eng, id) => {
       const key = eng + ':' + id
       if (shotCache.has(key) || shotLoading.has(key)) return
       const p = api({ op: 'shotData', engagement: eng, id: id }).then((r) => {
         shotCache.set(key, r && r.base64 ? 'data:' + (r.mime || 'image/png') + ';base64,' + r.base64 : '')
+        while (shotCache.size > SHOT_CACHE_LIMIT) shotCache.delete(shotCache.keys().next().value)
         shotLoading.delete(key)
         const snap = Object.assign({}, ui)
         for (const f of Array.from(subs)) {
@@ -4416,7 +4464,8 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     const ShotImage = ({ eng, shot, height }) => {
       const [zoom, setZoom] = React.useState(false)
       const src = shotSrc(eng, shot.id)
-      if (src === null) { loadShot(eng, shot.id); }
+      /* 拉图放在 effect 里：render 期间发请求 + 写外部 store 会让同一帧重复触发。 */
+      React.useEffect(() => { if (src === null) loadShot(eng, shot.id) }, [eng, shot.id, src])
       const card = shot.kind === 'card'
       return h('div', { className: 'rt-shot' },
         src === null
@@ -4453,8 +4502,14 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
     }
     /** 发现时间在列表里只留「月-日 时:分」：整行宽度紧张，完整时间进悬浮提示 */
     const fmtShort = (s) => {
-      const t = String(s || '').replace('T', ' ')
-      return t.length >= 16 ? t.slice(5, 16) : (t || '—')
+      if (!s) return '—'
+      const d = asLocal(s)
+      if (d === null) {
+        const t = String(s).replace('T', ' ')
+        return t.length >= 16 ? t.slice(5, 16) : t
+      }
+      return pad2(d.getMonth() + 1) + '-' + pad2(d.getDate())
+        + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes())
     }
     const provLabel = (p) => (p === 'passive' ? '被动' : p === 'active' ? '主动' : '未知')
 
@@ -4945,12 +5000,17 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       const [data, setData] = React.useState(null)
       const [err, setErr] = React.useState(null)
       const [day, setDay] = React.useState('')
+      const seq = useLoadSeq()
       React.useEffect(() => {
         if (!eng) return
+        const my = seq.take()
         setData(null)
         api({ op: 'discoveryTimeline', engagement: eng, limit: 200 })
-          .then((r) => { if (!r || r.ok === false) setErr((r && r.error) || '加载失败'); else { setErr(null); setData(r) } },
-            (e) => setErr(String((e && e.message) || e)))
+          .then((r) => {
+            if (!seq.live(my)) return
+            if (!r || r.ok === false) setErr((r && r.error) || '加载失败')
+            else { setErr(null); setData(r) }
+          }, (e) => { if (seq.live(my)) setErr(String((e && e.message) || e)) })
       }, [eng, refreshKey])
       if (err) return h('div', { className: 'rt-pane' }, h('div', { className: 'rt-err' }, err))
       if (!data) return h('div', { className: 'rt-empty' }, '加载中…')
@@ -5001,14 +5061,17 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       const [msg, setMsg] = React.useState(null)
       const [busy, setBusy] = React.useState(false)
 
+      const seq = useLoadSeq()
       React.useEffect(() => {
         /* 无靶标也允许：服务端回内置默认，不再报 engagement required */
+        const my = seq.take()
         api(eng ? { op: 'prompts', engagement: eng } : { op: 'prompts' }).then((r) => {
+          if (!seq.live(my)) return
           if (!r || r.ok === false) { setMsg({ err: (r && r.error) || '读取失败' }); return }
           setRoles(r.roles || [])
           if (r.roles && r.roles.length) setActive((cur) => cur || r.roles[0].role)
           if (r.builtin) setMsg({ ok: '当前为内置默认提示词（创建靶标后可按靶标保存修改）' })
-        }, (e) => setMsg({ err: String((e && e.message) || e) }))
+        }, (e) => { if (seq.live(my)) setMsg({ err: String((e && e.message) || e) }) })
       }, [eng, refreshKey])
 
       React.useEffect(() => {
@@ -5584,7 +5647,8 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 
       return h('div', { className: 'rt-main' }, toolbar, conclusion,
         h('div', { className: 'rt-subtabs' },
-          subTabBtn('vulns', '漏洞', state.total || 0),
+          /* 用实际渲染条数：total 是服务端 COUNT(*)，列表被 limit 截断时两者对不上。 */
+          subTabBtn('vulns', '漏洞', (state.items || []).length),
           subTabBtn('files', '攻击文件', allFiles.length),
           subTabBtn('creds', '凭据', creds.length),
           subTabBtn('access', '访问会话', accesses.length),
@@ -5638,14 +5702,17 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       const [view, setView] = React.useState('A')
       const [openId, setOpenId] = React.useState(null)
 
+      const seq = useLoadSeq()
       const load = () => {
         if (!eng) return
+        const my = seq.take()
         setLoading(true)
         api({ op: 'scoreChain', engagement: eng }).then((r) => {
+          if (!seq.live(my)) return
           setLoading(false)
           if (!r || r.ok === false) { setErr((r && r.error) || '读取失败'); return }
           setErr(null); setData(r)
-        }, (e) => { setLoading(false); setErr(String((e && e.message) || e)) })
+        }, (e) => { if (!seq.live(my)) return; setLoading(false); setErr(String((e && e.message) || e)) })
       }
       React.useEffect(load, [eng, refreshKey])
 
@@ -5844,21 +5911,28 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       /* 报告按阶段折叠：默认全开，折叠状态按靶标记住（阶段多时便于逐段交付） */
       const collapse = useCollapse('report:' + eng)
 
+      const seq = useLoadSeq()
       const load = () => {
         if (!eng) return
+        const my = seq.take()
         setBusy(true); setMsg(null)
         api({ op: 'scoreReport', engagement: eng }).then((r) => {
+          if (!seq.live(my)) return
           if (!r || r.ok === false) { setBusy(false); setErr((r && r.error) || '生成失败'); return }
           /* 老 host 只给平铺条目、不给阶段分组（或阶段行缺失）：自己按攻击链分组，
              否则报告页会误报"还没有可交付的成果"。分组数据取自 scoreChain。 */
           if ((!r.stages || r.stages.length === 0) && (r.items || []).length > 0) {
             api({ op: 'scoreChain', engagement: eng }).then((c) => {
+              if (!seq.live(my)) return
               setBusy(false); setErr(null); setData(Object.assign({}, r, { stages: groupByStage(r.items, c) }))
-            }, () => { setBusy(false); setErr(null); setData(r) })
+            }, () => {
+              if (!seq.live(my)) return
+              setBusy(false); setErr(null); setData(r)
+            })
             return
           }
           setBusy(false); setErr(null); setData(r)
-        }, (e) => { setBusy(false); setErr(String((e && e.message) || e)) })
+        }, (e) => { if (!seq.live(my)) return; setBusy(false); setErr(String((e && e.message) || e)) })
       }
       React.useEffect(load, [eng, refreshKey])
 
@@ -6066,15 +6140,18 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       const collapse = useCollapse('files:' + eng)
       const [detail, setDetail] = React.useState(null)
 
+      const seq = useLoadSeq()
       const load = () => {
         if (!eng) return
+        const my = seq.take()
         setBusy(true)
         api({ op: 'attackFiles', engagement: eng }).then((r) => {
+          if (!seq.live(my)) return
           setBusy(false)
           if (!r || r.ok === false) { setErr((r && r.error) || '读取失败'); return }
           setErr(null)
           setFolders(r.items || [])
-        }, (e) => { setBusy(false); setErr(String((e && e.message) || e)) })
+        }, (e) => { if (!seq.live(my)) return; setBusy(false); setErr(String((e && e.message) || e)) })
       }
       React.useEffect(load, [eng, refreshKey])
 
@@ -6623,15 +6700,18 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       const [form, setForm] = React.useState(null)
       const [msg, setMsg] = React.useState(null)
 
+      const seq = useLoadSeq()
       const load = () => {
         if (!eng) return
+        const my = seq.take()
         setBusy(true)
         api({ op: 'scores', engagement: eng }).then((r) => {
+          if (!seq.live(my)) return
           setBusy(false)
           if (!r || r.ok === false) { setErr((r && r.error) || '读取失败'); return }
           setErr(null)
           setData(r)
-        }, (e) => { setBusy(false); setErr(String((e && e.message) || e)) })
+        }, (e) => { if (!seq.live(my)) return; setBusy(false); setErr(String((e && e.message) || e)) })
       }
       React.useEffect(load, [eng, refreshKey])
 
@@ -6680,7 +6760,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
         }, (e) => { setBusy(false); setMsg({ err: String((e && e.message) || e) }) })
       }
 
-      const summary = (data && data.summary) || { achievedPoints: 0, pointCount: 0, hitPointCount: 0, hitCount: 0, selfCreatedHits: 0, serviceCappedHits: 0 }
+      const summary = (data && data.summary) || { achievedPoints: 0, pointCount: 0, hitPointCount: 0, hitCount: 0, countedHits: 0, selfCreatedHits: 0, serviceCappedHits: 0 }
       const items = (data && data.items) || []
 
       /* 按合并版的 8 个类别分组渲染（后端 ruleGroups 已排好序、组内按分值升序）。
@@ -6995,7 +7075,9 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
         }, (e) => { if (my === seq.current) setErr(String((e && e.message) || e)) })
           .finally(() => { if (my === seq.current) inflight.current = false })
       }
-      React.useEffect(() => { seq.current += 1; load() }, [eng, refreshKey])
+      /* 切靶标/刷新时把在途标记复位：旧请求的 finally 因序号不符不会清，
+         不复位的话这里会永久早退，5 秒轮询也全空转。 */
+      React.useEffect(() => { seq.current += 1; inflight.current = false; load() }, [eng, refreshKey])
       React.useEffect(() => {
         if (!eng || !auto) return undefined
         const timer = setInterval(load, 5000)
@@ -7117,13 +7199,16 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       const [msg, setMsg] = React.useState(null)
       const [copied, setCopied] = React.useState(null)
 
+      const seq = useLoadSeq()
       const load = () => {
         if (!eng) return
+        const my = seq.take()
         api({ op: 'sessions', engagement: eng }).then((r) => {
+          if (!seq.live(my)) return
           if (!r || r.ok === false) { setErr((r && r.error) || '读取失败'); return }
           setErr(null)
           setData(r)
-        }, (e) => setErr(String((e && e.message) || e)))
+        }, (e) => { if (seq.live(my)) setErr(String((e && e.message) || e)) })
       }
       React.useEffect(load, [eng, refreshKey])
 
@@ -7358,16 +7443,20 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
       const [concurrency, setConcurrency] = React.useState(null)
       const [busy, setBusy] = React.useState(false)
 
+      const seq = useLoadSeq()
       const load = () => {
+        const my = seq.take()
         setBusy(true)
         api({ op: eng ? 'prompts' : 'bootstrap', engagement: eng || undefined }).then((r) => {
+          if (!seq.live(my)) return
           setBusy(false)
           if (!r || r.ok === false) { setErr((r && r.error) || '读取失败'); return }
           setErr(null)
           if (r.roles) setRoles(r.roles)
-        }, (e) => { setBusy(false); setErr(String((e && e.message) || e)) })
+        }, (e) => { if (!seq.live(my)) return; setBusy(false); setErr(String((e && e.message) || e)) })
         /* 并发名额按"当前跑着的子智能体"算；host 侧读 subagents 注册表 */
         api({ op: 'agentsStatus' }).then((r) => {
+          if (!seq.live(my)) return
           if (r && r.ok !== false) setConcurrency(r)
         }, () => {})
       }
@@ -7980,7 +8069,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 		let drillGrantPosting = 0;
 		let drillGrantState = { ready: false, granted: false };
 		let drillSyncRetryTimer = null;
-		const AUTH_LEGAL_HTML = "<h3>Solemn Legal Disclaimer and Notice on Compliant Use</h3>\n    <p>You must read this notice in full before entering the drill console. This project is a non-profit open-source project that complies with national laws and regulations and with the rules of the platforms on which it is used, and is provided only for study, research, and technical reference. No entity may use this project for commercial sale, paid resale, or profit from illicit or gray-market activities.</p>\n    <p>The developers firmly oppose and prohibit all forms of illegal or criminal activity, and will never support, encourage, or assist unauthorized network attacks, exploitation, data theft, unauthorized intrusion into computer information systems, or the generation of illegal or prohibited content. Any use of this project for illegal or criminal activity is unrelated to the developers, and the perpetrator bears full legal responsibility independently in accordance with the law. The following clauses may not be circumvented under the pretext of scientific research, teaching, testing, demonstration, or internal study.</p>\n    <h3>1. This repository contains no illegal content</h3>\n    <p>The code, documentation, patches, and default prompts published by dsh-purge are not trojans, backdoors, unauthorized penetration tools, ransomware, or credential-stuffing scripts, nor are they attack payloads aimed at public networks or third-party systems. The project does not provide illegal content and does not instigate, organize, or assist in any illegal or criminal activity.</p>\n    <h3>2. Local operations do not constitute external authorization</h3>\n    <p>Applying patches, writing, rolling back, and uninstalling all take place within local files and local processes. These operations do not scan, probe, intrude into, or send attack traffic to any public host or unauthorized system, and this machine must not be used as a jump host.</p>\n    <p>If the plugin has update checks enabled, it may only access this plugin's own GitHub repository to verify the version. That access is unrelated to network attacks on third-party systems and must not be interpreted as authorization for external penetration testing.</p>\n    <h3>3. Permitted scope of use</h3>\n    <p>Use is permitted only in environments you can prove you are entitled to handle: the official Harness installed locally on a machine you administer; offline, local synthetic targets; cybersecurity exercise ranges for which the owner has issued lawful written authorization; and controlled environments in a compliant laboratory. Written authorization must correspond to specific targets, time, and scope. Entering only an organization name, or relying only on an oral statement, does not constitute authorization.</p>\n    <p>Targets without the owner's lawful written authorization, publicly reachable online systems, production services, and critical information infrastructure such as energy, transportation, water resources, finance, public services, and e-government systems must not be used as exercise targets.</p>\n    <h3>4. Laws that must be complied with, by article and paragraph</h3>\n    <p>Criminal Law of the People's Republic of China, Article 285(1): It is prohibited to violate state regulations and intrude into computer information systems in the fields of state affairs, national defense, and cutting-edge science and technology.</p>\n    <p>Article 285(2): It is prohibited to intrude into computer information systems other than those specified in the preceding paragraph, or to use other technical means to obtain data stored, processed, or transmitted in such systems, or to exercise illegal control over such systems.</p>\n    <p>Article 285(3): It is prohibited to provide programs or tools specially used for intruding into or illegally controlling computer information systems; providing programs or tools to others while knowing that they intend to intrude or illegally control is likewise prohibited.</p>\n    <p>Article 286(1): It is prohibited to delete, modify, add to, or interfere with the functions of a computer information system, causing the system to fail to operate normally.</p>\n    <p>Article 286(2): It is prohibited to delete, modify, or add to data and application programs stored, processed, or transmitted in a system.</p>\n    <p>Article 286(3): It is prohibited to intentionally create or spread destructive programs such as computer viruses that affect the normal operation of computer systems.</p>\n    <p>Article 287: It is prohibited to use computers to commit financial fraud, theft, embezzlement, misappropriation of public funds, theft of state secrets, or other crimes.</p>\n    <p>Article 287-1, paragraph 1, item (1): It is prohibited to establish websites or communication groups used for illegal or criminal activities such as fraud, teaching criminal methods, or producing or selling prohibited or controlled items.</p>\n    <p>Article 287-1, paragraph 1, item (2): It is prohibited to publish information about producing or selling drugs, firearms, obscene materials, or other prohibited or controlled items, or other illegal or criminal information.</p>\n    <p>Article 287-1, paragraph 1, item (3): It is prohibited to publish information for the purpose of committing fraud or other illegal or criminal activities.</p>\n    <p>Article 287-2: It is prohibited to knowingly provide technical support, advertising promotion, payment settlement, or other assistance to others who use information networks to commit crimes.</p>\n    <p>Article 253-1, paragraphs 1 and 3: It is prohibited to sell or provide citizens' personal information to others; it is prohibited to steal or otherwise unlawfully obtain citizens' personal information.</p>\n    <p>Cybersecurity Law of the People's Republic of China, Article 13, paragraph 2: When using networks, one must not endanger cybersecurity, and must not use networks to engage in activities that endanger national security, honor, and interests; incite subversion of state power or overthrow of the socialist system; incite secession or undermine national unity; promote terrorism or extremism; promote ethnic hatred or ethnic discrimination; spread violence or obscene and pornographic information; fabricate or spread false information to disrupt economic and social order; or infringe on the reputation, privacy, intellectual property, or other lawful rights and interests of others.</p>\n    <p>Article 14: It is prohibited to use networks to engage in activities that endanger the physical and mental health of minors.</p>\n    <p>Article 29: It is prohibited to illegally intrude into others' networks, interfere with the normal functions of others' networks, or steal network data; it is prohibited to provide programs or tools specially used for intruding into networks, interfering with the normal functions of networks and protective measures, or stealing network data; when knowing that others are engaged in activities endangering cybersecurity, it is prohibited to provide them with technical support, advertising promotion, payment settlement, or other assistance.</p>\n    <p>Article 33: Critical information infrastructure in public communications and information services, energy, transportation, water resources, finance, public services, and e-government is subject to priority protection. Without lawful authorization, no one may intrude into, interfere with, or destroy it.</p>\n    <p>Article 46: It is prohibited to steal or otherwise unlawfully obtain personal information, and it is prohibited to unlawfully sell or unlawfully provide personal information to others.</p>\n    <p>Article 48: It is prohibited to establish websites or communication groups used for fraud, teaching criminal methods, producing or selling prohibited or controlled items, or other illegal or criminal activities; it is prohibited to use networks to publish information involving the above illegal or criminal activities.</p>\n    <p>Article 50: Electronic information sent and application software provided must not contain malicious programs, and must not contain information that laws or administrative regulations prohibit from being published or transmitted.</p>\n    <p>Data Security Law of the People's Republic of China, Article 8: Data processing activities must not endanger national security or the public interest, or harm the lawful rights and interests of individuals or organizations.</p>\n    <p>Article 32(1): Data must be collected by lawful and proper means; data must not be stolen or otherwise unlawfully obtained.</p>\n    <p>Article 32(2): Where laws or administrative regulations specify the purpose and scope of data collection and use, data may only be collected and used within that purpose and scope.</p>\n    <p>Article 51: Those who steal or otherwise unlawfully obtain data, or thereby harm the lawful rights and interests of individuals or organizations, shall be punished in accordance with relevant laws and administrative regulations.</p>\n    <p>Personal Information Protection Law of the People's Republic of China, Article 5: Personal information must be processed lawfully, properly, necessarily, honestly, and in good faith, and must not be processed by misleading, fraudulent, coercive, or other such means.</p>\n    <p>Article 6, paragraphs 1 and 2: Personal information must be processed for a clear and reasonable purpose and in a way directly related to that purpose, using methods that have the least impact on individual rights and interests; collection must be limited to the minimum scope necessary to achieve the processing purpose, and excessive collection is prohibited.</p>\n    <p>Article 10: It is prohibited to unlawfully collect, use, process, or transmit others' personal information, and to unlawfully buy, sell, provide, or disclose others' personal information; it is prohibited to engage in personal information processing activities that endanger national security or the public interest.</p>\n    <p>Article 13: Personal information must not be processed where none of the following applies: the individual's consent has been obtained; processing is necessary for concluding or performing a contract to which the individual is a party; processing is necessary for performing statutory duties or obligations; processing is necessary for responding to public health emergencies or protecting the life, health, and property of the individual in an emergency; processing is necessary for public-interest news reporting or public opinion supervision within a reasonable scope; the personal information has already been lawfully disclosed by the individual or otherwise lawfully disclosed; or other circumstances provided by laws or administrative regulations.</p>\n    <p>Articles 28 and 29: Biometrics, medical health, financial accounts, whereabouts and movement trajectories, and personal information of minors under the age of 14 are sensitive personal information. It must not be processed without a specific purpose, sufficient necessity, and strict protection measures, and without the individual's separate consent.</p>\n    <p>In addition, other currently effective laws, administrative regulations, and regulatory provisions, as well as the terms of service and abuse policies of the model used, must also be complied with.</p>\n    <h3>5. Prohibited directions under this notice</h3>\n    <p>Unauthorized access. It is prohibited to register as a target any organization, domain, address, public network system, production service, or critical information infrastructure for which there is no written authorization, and to scan, probe, intrude into, control, or send traffic to it. Corresponds to Criminal Law Article 285(1) and (2), and Cybersecurity Law Articles 29 and 33.</p>\n    <p>Damage and malicious programs. It is prohibited to delete, modify, add to, or interfere with others' system functions or the data and application programs therein; to create or spread viruses, ransomware, or other destructive programs; or to plant malicious programs in information or software. Corresponds to Criminal Law Article 286(1) to (3), and Cybersecurity Law Article 50.</p>\n    <p>Tools and assistance. It is prohibited to provide this project or this machine to others for intrusion, illegal control, or data theft; or, while knowing that the other party is committing a cybercrime, to still provide programs, tools, technical support, advertising promotion, or payment settlement. Corresponds to Criminal Law Article 285(3) and Article 287-2, and Cybersecurity Law Article 29.</p>\n    <p>Data. It is prohibited to steal, unlawfully collect, use beyond scope, disclose, sell, or provide to others business data, accounts, passwords, and other protected data. Corresponds to Data Security Law Articles 8, 32, and 51.</p>\n    <p>Personal information. It is prohibited to unlawfully collect, use, process, transmit, buy, sell, provide, or disclose others' personal information; to over-collect; to process by misleading, fraudulent, or coercive means; or to process biometric, medical health, financial account, whereabouts, and children's personal information without authorization. Corresponds to Criminal Law Article 253-1(1) and (3); Cybersecurity Law Article 46; Personal Information Protection Law Articles 5, 6, 10, 13, 28, and 29.</p>\n    <p>Fraud and illegal information. It is prohibited to establish or use websites or groups to commit fraud, teach criminal methods, or produce or sell prohibited or controlled items; to publish such information; or to use computers to commit fraud, theft, embezzlement, misappropriation of public funds, or theft of state secrets. Corresponds to Criminal Law Article 287, Article 287-1(1)(i) to (iii), and Cybersecurity Law Article 48.</p>\n    <p>Content. It is prohibited to generate or spread content that endangers national security, honor, and interests; to incite subversion or secession; to promote terrorism, extremism, or ethnic hatred; to spread violence, obscene or pornographic content, or gambling; to fabricate or spread false information that disrupts economic and social order; to infringe on reputation, privacy, or intellectual property; or to produce content that endangers the physical and mental health of minors. Corresponds to Cybersecurity Law Article 13, paragraph 2, and Article 14.</p>\n    <p>Spread of results. Records, asset information, and files created during exercises may remain only within the targets and time limits specified in the written authorization; they must not be handed to anyone not entitled to know them, and must not be repurposed beyond the authorization.</p>\n    <h3>6. Liability rests with the user</h3>\n    <p>This project is provided \"as is\" under the MIT License. The developers make no warranty as to completeness, security, or fitness for purpose. Users bear independent and full civil, administrative, and criminal liability for their own downloading, deployment, operation, modification, and dissemination, as well as for all inputs and outputs. The author and contributors are not liable for direct, indirect, or joint liability arising from abuse.</p>\n    <p>By checking the boxes, the operator confirms on their own behalf; this cannot substitute for someone who has not read this notice, nor can it present another person's system as already authorized.</p>\n    <h3>7. Breach terminates the authorization</h3>\n    <p>Once used for illegal attacks, malicious activity, or any of the prohibited directions above, the license to use this project automatically terminates from the date of that act and is irrevocable. Use must stop immediately, and the project's code, scripts, and derived data must be destroyed, with liability borne in accordance with the law. After the authorization terminates, the drill console must not be opened or used any further.</p>\n    <h3>8. Relationship with DeepSeek</h3>\n    <p>This project is an independent open-source project and has no affiliation, commercial cooperation, authorization, or official endorsement with DeepSeek or its affiliates. The word \"official\" in this document only means that the evaluated object is the official DeepSeek Harness software package installed locally by the user; it does not mean that DeepSeek officially develops, endorses, or guarantees this plugin.</p>\n    <p>End of document. Only after the countdown ends, you scroll to here, and check all three boxes does it mean that you, as yourself, accept this notice and complete this drill console authorization.</p>";
+		const AUTH_LEGAL_HTML = "<h3>Solemn Legal Disclaimer and Notice on Compliant Use</h3>\n    <p>You must read this notice in full before entering the drill console. This project is a non-profit open-source project that complies with national laws and regulations and with the rules of the platforms on which it is used, and is provided only for study, research, and technical reference. No entity may use this project for commercial sale, paid resale, or profit from illicit or gray-market activities.</p>\n    <p>The maintainers firmly oppose and prohibit all forms of illegal or criminal activity, and will never support, encourage, or assist unauthorized network attacks, exploitation, data theft, unauthorized intrusion into computer information systems, or the generation of illegal or prohibited content. Any use of this project for illegal or criminal activity is unrelated to the maintainers, and the perpetrator bears full legal responsibility independently in accordance with the law. The following clauses may not be circumvented under the pretext of scientific research, teaching, testing, demonstration, or internal study.</p>\n    <h3>1. This repository contains no illegal content</h3>\n    <p>The code, documentation, patches, and default prompts published by dsh-purge are not trojans, backdoors, unauthorized penetration tools, ransomware, or credential-stuffing scripts, nor are they attack payloads aimed at public networks or third-party systems. The project does not provide illegal content and does not instigate, organize, or assist in any illegal or criminal activity.</p>\n    <h3>2. Local operations do not constitute external authorization</h3>\n    <p>Applying patches, writing, rolling back, and uninstalling all take place within local files and local processes. These operations do not scan, probe, intrude into, or send attack traffic to any public host or unauthorized system, and this machine must not be used as a jump host.</p>\n    <p>If the plugin has update checks enabled, it may only access this plugin's own GitHub repository to verify the version. That access is unrelated to network attacks on third-party systems and must not be interpreted as authorization for external penetration testing.</p>\n    <h3>3. Permitted scope of use</h3>\n    <p>Use is permitted only in environments you can prove you are entitled to handle: the official Harness installed locally on a machine you administer; offline, local synthetic targets; cybersecurity exercise ranges for which the owner has issued lawful written authorization; and controlled environments in a compliant laboratory. Written authorization must correspond to specific targets, time, and scope. Entering only an organization name, or relying only on an oral statement, does not constitute authorization.</p>\n    <p>Targets without the owner's lawful written authorization, publicly reachable online systems, production services, and critical information infrastructure such as energy, transportation, water resources, finance, public services, and e-government systems must not be used as exercise targets.</p>\n    <h3>4. Laws that must be complied with, by article and paragraph</h3>\n    <p>Criminal Law of the People's Republic of China, Article 285(1): It is prohibited to violate state regulations and intrude into computer information systems in the fields of state affairs, national defense, and cutting-edge science and technology.</p>\n    <p>Article 285(2): It is prohibited to intrude into computer information systems other than those specified in the preceding paragraph, or to use other technical means to obtain data stored, processed, or transmitted in such systems, or to exercise illegal control over such systems.</p>\n    <p>Article 285(3): It is prohibited to provide programs or tools specially used for intruding into or illegally controlling computer information systems; providing programs or tools to others while knowing that they intend to intrude or illegally control is likewise prohibited.</p>\n    <p>Article 286(1): It is prohibited to delete, modify, add to, or interfere with the functions of a computer information system, causing the system to fail to operate normally.</p>\n    <p>Article 286(2): It is prohibited to delete, modify, or add to data and application programs stored, processed, or transmitted in a system.</p>\n    <p>Article 286(3): It is prohibited to intentionally create or spread destructive programs such as computer viruses that affect the normal operation of computer systems.</p>\n    <p>Article 287: It is prohibited to use computers to commit financial fraud, theft, embezzlement, misappropriation of public funds, theft of state secrets, or other crimes.</p>\n    <p>Article 287-1, paragraph 1, item (1): It is prohibited to establish websites or communication groups used for illegal or criminal activities such as fraud, teaching criminal methods, or producing or selling prohibited or controlled items.</p>\n    <p>Article 287-1, paragraph 1, item (2): It is prohibited to publish information about producing or selling drugs, firearms, obscene materials, or other prohibited or controlled items, or other illegal or criminal information.</p>\n    <p>Article 287-1, paragraph 1, item (3): It is prohibited to publish information for the purpose of committing fraud or other illegal or criminal activities.</p>\n    <p>Article 287-2: It is prohibited to knowingly provide technical support, advertising promotion, payment settlement, or other assistance to others who use information networks to commit crimes.</p>\n    <p>Article 253-1, paragraphs 1 and 3: It is prohibited to sell or provide citizens' personal information to others; it is prohibited to steal or otherwise unlawfully obtain citizens' personal information.</p>\n    <p>Cybersecurity Law of the People's Republic of China, Article 13, paragraph 2: When using networks, one must not endanger cybersecurity, and must not use networks to engage in activities that endanger national security, honor, and interests; incite subversion of state power or overthrow of the socialist system; incite secession or undermine national unity; promote terrorism or extremism; promote ethnic hatred or ethnic discrimination; spread violence or obscene and pornographic information; fabricate or spread false information to disrupt economic and social order; or infringe on the reputation, privacy, intellectual property, or other lawful rights and interests of others.</p>\n    <p>Article 14: It is prohibited to use networks to engage in activities that endanger the physical and mental health of minors.</p>\n    <p>Article 29: It is prohibited to illegally intrude into others' networks, interfere with the normal functions of others' networks, or steal network data; it is prohibited to provide programs or tools specially used for intruding into networks, interfering with the normal functions of networks and protective measures, or stealing network data; when knowing that others are engaged in activities endangering cybersecurity, it is prohibited to provide them with technical support, advertising promotion, payment settlement, or other assistance.</p>\n    <p>Article 33: Critical information infrastructure in public communications and information services, energy, transportation, water resources, finance, public services, and e-government is subject to priority protection. Without lawful authorization, no one may intrude into, interfere with, or destroy it.</p>\n    <p>Article 46: It is prohibited to steal or otherwise unlawfully obtain personal information, and it is prohibited to unlawfully sell or unlawfully provide personal information to others.</p>\n    <p>Article 48: It is prohibited to establish websites or communication groups used for fraud, teaching criminal methods, producing or selling prohibited or controlled items, or other illegal or criminal activities; it is prohibited to use networks to publish information involving the above illegal or criminal activities.</p>\n    <p>Article 50: Electronic information sent and application software provided must not contain malicious programs, and must not contain information that laws or administrative regulations prohibit from being published or transmitted.</p>\n    <p>Data Security Law of the People's Republic of China, Article 8: Data processing activities must not endanger national security or the public interest, or harm the lawful rights and interests of individuals or organizations.</p>\n    <p>Article 32(1): Data must be collected by lawful and proper means; data must not be stolen or otherwise unlawfully obtained.</p>\n    <p>Article 32(2): Where laws or administrative regulations specify the purpose and scope of data collection and use, data may only be collected and used within that purpose and scope.</p>\n    <p>Article 51: Those who steal or otherwise unlawfully obtain data, or thereby harm the lawful rights and interests of individuals or organizations, shall be punished in accordance with relevant laws and administrative regulations.</p>\n    <p>Personal Information Protection Law of the People's Republic of China, Article 5: Personal information must be processed lawfully, properly, necessarily, honestly, and in good faith, and must not be processed by misleading, fraudulent, coercive, or other such means.</p>\n    <p>Article 6, paragraphs 1 and 2: Personal information must be processed for a clear and reasonable purpose and in a way directly related to that purpose, using methods that have the least impact on individual rights and interests; collection must be limited to the minimum scope necessary to achieve the processing purpose, and excessive collection is prohibited.</p>\n    <p>Article 10: It is prohibited to unlawfully collect, use, process, or transmit others' personal information, and to unlawfully buy, sell, provide, or disclose others' personal information; it is prohibited to engage in personal information processing activities that endanger national security or the public interest.</p>\n    <p>Article 13: Personal information must not be processed where none of the following applies: the individual's consent has been obtained; processing is necessary for concluding or performing a contract to which the individual is a party; processing is necessary for performing statutory duties or obligations; processing is necessary for responding to public health emergencies or protecting the life, health, and property of the individual in an emergency; processing is necessary for public-interest news reporting or public opinion supervision within a reasonable scope; the personal information has already been lawfully disclosed by the individual or otherwise lawfully disclosed; or other circumstances provided by laws or administrative regulations.</p>\n    <p>Articles 28 and 29: Biometrics, medical health, financial accounts, whereabouts and movement trajectories, and personal information of minors under the age of 14 are sensitive personal information. It must not be processed without a specific purpose, sufficient necessity, and strict protection measures, and without the individual's separate consent.</p>\n    <p>In addition, other currently effective laws, administrative regulations, and regulatory provisions, as well as the terms of service and abuse policies of the model used, must also be complied with.</p>\n    <h3>5. Prohibited directions under this notice</h3>\n    <p>Unauthorized access. It is prohibited to register as a target any organization, domain, address, public network system, production service, or critical information infrastructure for which there is no written authorization, and to scan, probe, intrude into, control, or send traffic to it. Corresponds to Criminal Law Article 285(1) and (2), and Cybersecurity Law Articles 29 and 33.</p>\n    <p>Damage and malicious programs. It is prohibited to delete, modify, add to, or interfere with others' system functions or the data and application programs therein; to create or spread viruses, ransomware, or other destructive programs; or to plant malicious programs in information or software. Corresponds to Criminal Law Article 286(1) to (3), and Cybersecurity Law Article 50.</p>\n    <p>Tools and assistance. It is prohibited to provide this project or this machine to others for intrusion, illegal control, or data theft; or, while knowing that the other party is committing a cybercrime, to still provide programs, tools, technical support, advertising promotion, or payment settlement. Corresponds to Criminal Law Article 285(3) and Article 287-2, and Cybersecurity Law Article 29.</p>\n    <p>Data. It is prohibited to steal, unlawfully collect, use beyond scope, disclose, sell, or provide to others business data, accounts, passwords, and other protected data. Corresponds to Data Security Law Articles 8, 32, and 51.</p>\n    <p>Personal information. It is prohibited to unlawfully collect, use, process, transmit, buy, sell, provide, or disclose others' personal information; to over-collect; to process by misleading, fraudulent, or coercive means; or to process biometric, medical health, financial account, whereabouts, and children's personal information without authorization. Corresponds to Criminal Law Article 253-1(1) and (3); Cybersecurity Law Article 46; Personal Information Protection Law Articles 5, 6, 10, 13, 28, and 29.</p>\n    <p>Fraud and illegal information. It is prohibited to establish or use websites or groups to commit fraud, teach criminal methods, or produce or sell prohibited or controlled items; to publish such information; or to use computers to commit fraud, theft, embezzlement, misappropriation of public funds, or theft of state secrets. Corresponds to Criminal Law Article 287, Article 287-1(1)(i) to (iii), and Cybersecurity Law Article 48.</p>\n    <p>Content. It is prohibited to generate or spread content that endangers national security, honor, and interests; to incite subversion or secession; to promote terrorism, extremism, or ethnic hatred; to spread violence, obscene or pornographic content, or gambling; to fabricate or spread false information that disrupts economic and social order; to infringe on reputation, privacy, or intellectual property; or to produce content that endangers the physical and mental health of minors. Corresponds to Cybersecurity Law Article 13, paragraph 2, and Article 14.</p>\n    <p>Spread of results. Records, asset information, and files created during exercises may remain only within the targets and time limits specified in the written authorization; they must not be handed to anyone not entitled to know them, and must not be repurposed beyond the authorization.</p>\n    <h3>6. Liability rests with the user</h3>\n    <p>This project is provided \"as is\" under the MIT License. The maintainers make no warranty as to completeness, security, or fitness for purpose. Users bear independent and full civil, administrative, and criminal liability for their own downloading, deployment, operation, modification, and dissemination, as well as for all inputs and outputs. The maintainers and contributors are not liable for direct, indirect, or joint liability arising from abuse.</p>\n    <p>By checking the boxes, the operator confirms on their own behalf; this cannot substitute for someone who has not read this notice, nor can it present another person's system as already authorized.</p>\n    <h3>7. Breach terminates the authorization</h3>\n    <p>Once used for illegal attacks, malicious activity, or any of the prohibited directions above, the license to use this project automatically terminates from the date of that act and is irrevocable. Use must stop immediately, and the project's code, scripts, and derived data must be destroyed, with liability borne in accordance with the law. After the authorization terminates, the drill console must not be opened or used any further.</p>\n    <h3>8. Relationship with DeepSeek</h3>\n    <p>This project is an independent open-source project and has no affiliation, commercial cooperation, authorization, or official endorsement with DeepSeek or its affiliates. The word \"official\" in this document only means that the evaluated object is the official DeepSeek Harness software package installed locally by the user; it does not mean that DeepSeek officially develops, endorses, or guarantees this plugin.</p>\n    <p>End of document. Only after the countdown ends, you scroll to here, and check all three boxes does it mean that you, as yourself, accept this notice and complete this drill console authorization.</p>";
 
 		function readWelcomeAck() {
 			try { return window.localStorage.getItem(WELCOME_KEY) === "1"; } catch { return false; }
@@ -9033,29 +9122,156 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 		}
 
 
+		/* #208：undo 按钮不再注册进 conversation.input.right。
+		   Android WebView 切后台返回时，宿主 composer 的 React 子树只要在提交阶段抛一次，
+		   整块输入框就会被卸载；把按钮挪到 body 上的 fixed 宿主 + createPortal，
+		   渲染树完全离开 composer，位置按 .standardControls 的矩形对齐。 */
+		const REWIND_HOST_ATTR = "data-dsh-purge-rewind-host";
+		const REWIND_RESERVE_PX = 64;
+
+		function rewindControlsAnchor() {
+			if (typeof document === "undefined") return null;
+			// 取最靠下的那一组：输入框在页面底部；消息工具条里的同名控件更高，别抢。
+			const list = document.querySelectorAll('[class*="standardControls"]');
+			let best = null;
+			let bestTop = -Infinity;
+			for (let i = 0; i < list.length; i += 1) {
+				const el = list[i];
+				if (el.hidden) continue;
+				const rect = el.getBoundingClientRect();
+				if (!(rect.width > 0) || !(rect.height > 0)) continue;
+				if (rect.top >= bestTop) { best = el; bestTop = rect.top; }
+			}
+			return best;
+		}
+
+		function placeRewindHost(host, anchor, reserve) {
+			if (!host || !anchor) return;
+			const rect = anchor.getBoundingClientRect();
+			if (!(rect.width > 0) || anchor.hidden) {
+				host.style.display = "none";
+				return;
+			}
+			const width = host.offsetWidth || 60;
+			const height = host.offsetHeight || 28;
+			host.style.display = "block";
+			host.style.left = Math.max(0, Math.round(rect.left + (reserve - width) / 2)) + "px";
+			host.style.top = Math.round(rect.top + (rect.height - height) / 2) + "px";
+		}
+
+		function RewindDockMount() {
+			const t = useT();
+			const [host, setHost] = useState(null);
+			const [, bump] = useState(0);
+			const sessionId = currentSessionId(rewindSessions);
+			// 没有会话时不留空位：按钮不显示，padding 也一起归还。
+			const sessionRef = useRef(null);
+			sessionRef.current = sessionId;
+			const placeRef = useRef(null);
+
+			useEffect(() => {
+				if (typeof document === "undefined") return undefined;
+				let el = document.querySelector("[" + REWIND_HOST_ATTR + "]");
+				if (!el) {
+					el = document.createElement("div");
+					el.setAttribute(REWIND_HOST_ATTR, "");
+					document.body.appendChild(el);
+				}
+				el.style.cssText = "position:fixed;z-index:2147482500;display:none;left:0;top:0;";
+				setHost(el);
+				let padded = null;
+				let warned = false;
+				let lastQuery = 0;
+				const startedAt = Date.now();
+				const place = (force) => {
+					// 缓存锚点 + 1s 节流：只有锚点缺失/掉线时才全文档查一次，
+					// 否则长会话里每帧扫 [class*=...] 会拖慢滚动。
+					if (!padded || !padded.isConnected) {
+						const now = Date.now();
+						if (force || now - lastQuery > 1000) {
+							lastQuery = now;
+							const next = rewindControlsAnchor();
+							if (padded && padded !== next) padded.style.paddingLeft = padded.dataset.dshpPad || "";
+							if (next && next !== padded) next.dataset.dshpPad = next.style.paddingLeft || "";
+							padded = next;
+						}
+					}
+					const anchor = padded;
+					if (!anchor) {
+						el.style.display = "none";
+						if (!warned && Date.now() - startedAt > 5000) {
+							warned = true;
+							try { console.warn("[dsh-purge] rewind: composer standardControls anchor missing"); } catch { /* ignore */ }
+						}
+						return;
+					}
+					// 按钮标签会随失败提示变长，预留宽度跟着实测宽度走，避免压到模型选择器。
+					const reserve = Math.max(REWIND_RESERVE_PX, (el.offsetWidth || 60) + 12);
+					const pad = sessionRef.current ? reserve + "px" : (anchor.dataset.dshpPad || "");
+					if (anchor.style.paddingLeft !== pad) anchor.style.paddingLeft = pad;
+					if (!sessionRef.current) {
+						el.style.display = "none";
+						return;
+					}
+					placeRewindHost(el, anchor, reserve);
+				};
+				place(true);
+				placeRef.current = place;
+				const onMove = () => place(false);
+				const iv = setInterval(onMove, 500);
+				window.addEventListener("resize", onMove);
+				document.addEventListener("scroll", onMove, true);
+				return () => {
+					clearInterval(iv);
+					placeRef.current = null;
+					window.removeEventListener("resize", onMove);
+					document.removeEventListener("scroll", onMove, true);
+					if (padded) {
+						padded.style.paddingLeft = padded.dataset.dshpPad || "";
+						delete padded.dataset.dshpPad;
+					}
+					try { el.remove(); } catch { /* ignore */ }
+				};
+			}, []);
+
+			// 会话切换/首次挂载时立刻对齐，不用等 500ms 定时器。
+			useEffect(() => {
+				if (placeRef.current) placeRef.current(true);
+			}, [sessionId, host]);
+
+			useEffect(() => {
+				const offs = [];
+				const watch = (store) => {
+					try {
+						if (store && typeof store.subscribe === "function") {
+							offs.push(store.subscribe(() => bump((n) => (n + 1) % 1e9)));
+						}
+					} catch { /* ignore */ }
+				};
+				watch(rewindWorkspace && rewindWorkspace.selection);
+				watch(rewindSessions && rewindSessions.list);
+				const iv = setInterval(() => bump((n) => (n + 1) % 1e9), 2000);
+				return () => {
+					for (const off of offs) { try { off(); } catch { /* ignore */ } }
+					clearInterval(iv);
+				};
+			}, []);
+
+			if (!host || !sessionId) return null;
+			try {
+				const rd = require("react-dom");
+				if (rd && typeof rd.createPortal === "function") {
+					return rd.createPortal(h(RewindSafe, { sessionId, t }), host);
+				}
+			} catch { /* host 可能没暴露 react-dom */ }
+			return null;
+		}
+
 		function installRewindUi(ctx) {
 			rewindHost = ctx;
 			rewindSessions = ctx.sessions;
 			rewindWorkspace = ctx.uiWorkspace || null;
 			rewindConversation = ctx.conversation || null;
-			ctx.slots.inject("conversation.input.right", () => ctx.slots.register({
-				name: "conversation.input.right",
-				id: "dsh-purge-rewind",
-				order: 20,
-				inject: (sessionId) => ({
-					sessionId,
-					t: ctx.locale.bind(NS),
-				}),
-			}, RewindSafe));
-			// ctx.slots.inject("conversation.input.right", () => ctx.slots.register({
-			// 	name: "conversation.input.right",
-			// 	id: "dsh-purge-continue",
-			// 	order: 21,
-			// 	inject: (sessionId) => ({
-			// 		sessionId,
-			// 		t: ctx.locale.bind(NS),
-			// 	}),
-			// }, ContinueSafe));
 			ctx.effect(() => installRewindWatch(ctx), "dsh-purge: rewind watch");
 		}
 
@@ -9112,7 +9328,7 @@ body[data-ds-dark-theme] .rt-scope-testing,.dshp-dock[data-theme="dusk"] .rt-sco
 				name: "shell.overlay",
 				id: "dsh-purge-dock",
 				order: 50,
-			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeLauncher), h(PurgeDock), h(HeroNewSessionMount), h(TabRowPurgeMount), h(EnvAdaptSendGate))));
+			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeLauncher), h(PurgeDock), h(HeroNewSessionMount), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(RewindDockMount))));
 			try {
 				if (typeof ctx.inject === "function") {
 					ctx.inject(["sessions", "uiWorkspace", "workspaces", "conversation"], (host) => installRewindUi(host));

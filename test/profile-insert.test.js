@@ -15,8 +15,8 @@ import {
   INSERT_BLOCK,
 } from "../lib/profile-insert.js";
 
-const MASTER_URL = "https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master";
-const COMMIT_URL = "https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/abc1234567890";
+const MASTER_URL = "https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master";
+const COMMIT_URL = "https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/abc1234567890";
 
 function withTempProfile(lockText) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dsh-purge-test-"));

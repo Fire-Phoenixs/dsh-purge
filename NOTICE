@@ -1,7 +1,14 @@
 dsh-purge
-Copyright 2026 YuJunZhiXue
+Copyright 2026 YuJunZhiXue (original author)
+Copyright 2026 HunYiSage, HandlerOne01 (upstream maintainers, 1.1.90 / 1.1.91)
+Copyright 2026 Fire-Phoenix for changes in this continuation
 
-Source: https://github.com/YuJunZhiXue/dsh-purge
+Source (this continuation): https://github.com/Fire-Phoenixs/dsh-purge
+Upstream baseline: https://github.com/HandlerOne01/dsh-purge (1.1.91)
+Original source: https://github.com/YuJunZhiXue/dsh-purge (offline, 404)
+Rebuilt from the official 1.1.91 release archive. This continuation restores the
+red-team skill library and prompt sources removed upstream, embeds the newer
+Chinese prompt into the runtime slot, and adds DeepSeek Harness 0.2.2-rc.5 support.
 
 This product is licensed under the Apache License, Version 2.0.
 Derivative works must retain this NOTICE and attribution.

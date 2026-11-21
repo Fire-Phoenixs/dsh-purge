@@ -4,15 +4,15 @@
 
 <h1 align="center">⚔️ DeepSeek Harness サイバーセキュリティ レッドチームツール (dsh-purge)</h1>
 
-<p align="center"><strong>バージョン 1.1.81</strong></p>
+<p align="center"><strong>バージョン 1.1.91</strong></p>
 
 <p align="center">
   <em>DeepSeek Harness のジェイルブレイク: すべてのモデルに対応し、モデルごとにプロンプトを切り替え。デフォルトプロンプトは 小码酱 用。ぜひ Star ⭐ を。これをベースに開発する場合は「要帰属表示」をご覧ください。</em>
 </p>
 
 <p align="center">
-  <a href="https://github.com/YuJunZhiXue/dsh-purge/stargazers"><img src="https://img.shields.io/github/stars/YuJunZhiXue/dsh-purge?logo=github&label=Stars" alt="GitHub stars"></a>
-  <a href="https://github.com/YuJunZhiXue/dsh-purge/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat" alt="Apache-2.0"></a>
+  <a href="https://github.com/Fire-Phoenixs/dsh-purge/stargazers"><img src="https://img.shields.io/github/stars/HandlerOne01/dsh-purge?logo=github&label=Stars" alt="GitHub stars"></a>
+  <a href="https://github.com/Fire-Phoenixs/dsh-purge/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat" alt="Apache-2.0"></a>
   <a href="https://awesome-dsh-plugin.com"><img src="https://awesome-dsh-plugin.com/badge.svg" alt="awesome · DSH plugin"></a>
   <a href="https://deepseek.stream/plugins/dsh-purge"><img src="https://img.shields.io/badge/Hub-dsh--purge-1a73e8" alt="DeepSeek Harness Hub"></a>
   <a href="https://www.deepseek.com/harness/"><img src="https://img.shields.io/badge/dsh-0.2.0--rc.2%20%2F%200.2.1--rc.2-blue" alt="DSH"></a>
@@ -29,19 +29,31 @@
   <a href="README.md">English</a> | <a href="README.zh-CN.md">中文</a> | <a href="README.ja.md">日本語</a>
 </p>
 
-## 作者より
+> **本リポジトリは継続版です：削除された資産の復元 + 0.2.2-rc.5 対応**
+>
+> 上流 dsh-purge は 2026-11-10 に [HandlerOne01/dsh-purge](https://github.com/HandlerOne01/dsh-purge) へ移転しました（公式 1.1.90 リリースで再構築、1.1.91 として公開）。それ以前の `HunYiSage/dsh-purge` と原作者の `YuJunZhiXue/dsh-purge` はどちらも 404 で、履歴は復元できません。
+>
+> 本リポジトリは **1.1.91** をコードベースとし、次の三つを行います。① 上流が削除した**レッドチーム技能集 `skills/redteam/`（40 件：原作者 23 + コミュニティ／フル版から 17 件）**と**プロンプト原文**を復元し、実行スロットを新しい中国語プロンプトへ更新（上流 1.1.91 は今も旧英語版を注入しています）。② **DeepSeek Harness 0.2.2-rc.5** に対応（0.2.1-rc.2 / rc.5、0.2.2-rc.1 も維持）。③ 停止したリポジトリを指すインストール／更新 URL をすべて修正。
+>
+> インストールと更新は本リポジトリの URL を使用してください: `https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master`。原作者と上流メンテナのクレジット、NOTICE、商用制限はすべて保持します。差分は [COMPAT-NOTICE.md](./COMPAT-NOTICE.md) を参照。
 
-このオープンソースの成果物を、公然と売りさばく人たちがいました。その後、作者は呼び出されて話をすることになりました。あとは言わずもがな。行間を読んでください。
+## 運営チームより
 
-今後、**公開インターネットは閉じます**。オープンソース版では **ローカルのラボ IP のみ** を許可します（ループバックと RFC1918）。ドメインは先に名前解決され（hosts も含む）、すべての応答がプライベートまたはループバックでなければなりません。`.lab` を公開 IP に向ける hosts トリック、名前解決の失敗、公開 IP が混じった応答はブロックされます。**ゲームチートは禁止です**（エイムボット、ウォールハック、メモリ改ざん、アンチチート回避）。プロンプトとセッションゲートの両方で阻止します。このビルドにはスキルライブラリやナレッジベースは同梱されません。
+dsh-purge は当初、原作者が個人で開発したプロジェクトです。現在は **dsh-purge 運営チーム** が引き継ぎ、コード、ドキュメント、リリース、セキュリティ対応を担当しています。原作者のクレジットと出所の記録は引き続き保持します。旧リポジトリは公開停止となり、そのコミット、Issue、Release は復元できません。本リポジトリは **1.1.91** から履歴をやり直します。
 
-**オリジナルビルドの転売は禁止です。** 課金、スキン変更、グループでの売り込みは許可されません。フォークは自由ですが、**帰属表示が必須** で、出所を明記してください: [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge)。出所を隠したり、自分のものとして偽ったりすれば、あなたは向こう側です。
+プロジェクトの境界は変わりません。
 
-作者の個人チャンネル: [t.me/LLM_PoJia](https://t.me/LLM_PoJia)。メモや更新情報はそこに出ます。
+- **オープンソース版はローカルラボ専用です。** 攻撃タスクはループバックおよび RFC1918 のプライベートアドレスのみを対象とします。ドメインは先に名前解決され（hosts を含む）、解決されたすべてのアドレスがプライベートまたはループバックである必要があります。ラボ名を公開アドレスに向ける hosts 設定、名前解決の失敗、公開アドレスが混在する応答は拒否されます。
+- **ゲームチートは禁止です。** エイムボット、ウォールハック、メモリ改ざん、アンチチート回避を含み、プロンプト層とセッションゲートの両方で阻止します。
+- オープンソース版にはスキルライブラリとナレッジベースは含まれません。
+
+**オリジナルビルドの転売は禁止です。** 有料転売、ストア掲載のための再スキン、商用製品としての配布は許可されません。フォークおよび派生作品は、出所リポジトリ [HandlerOne01/dsh-purge](https://github.com/HandlerOne01/dsh-purge) を明記することを条件に許可されます。帰属表示の削除、出所の隠蔽、自作としての提示は、運営チームとして追及します。
+
+運営チームのチャンネル: [t.me/LLM_PoJia](https://t.me/LLM_PoJia)。お知らせと更新情報の配信に使用します。
 
 ## 目次
 
-- [作者より](#作者より)
+- [運営チームより](#運営チームより)
 - [これは何か](#これは何か)
 - [要帰属表示](#要帰属表示)
 - [ライセンス](#ライセンス)
@@ -57,7 +69,7 @@
 
 ## これは何か
 
-**dsh-purge** は、お使いのマシンにすでにインストールされている公式 [DeepSeek Harness](https://www.deepseek.com/harness/) 向けのサイバーセキュリティ レッドチームプラグインです。**1.1.81** は **DSH 0.2.1-rc.2** を対象とします（0.2.0 も動作します）。**DSH 0.2.1-rc.3 以降の新しい RC は非対応です。** 公式 **Web**（`dsh web`）と公式 **デスクトップ EXE** の両方に対応します。インストールと Apply はそれぞれ別々に行います。
+**dsh-purge** は、お使いのマシンにすでにインストールされている公式 [DeepSeek Harness](https://www.deepseek.com/harness/) 向けのサイバーセキュリティ レッドチームプラグインです。**1.2.0** は **DSH 0.2.2-rc.5**（npm latest）を主対象とし、**0.2.1-rc.2 / rc.5** と **0.2.2-rc.1** も引き続き動作します（0.2.0 も動作）。**0.2.2 のパッケージ構造の変更はすべて再アンカー済みです。** 公式 **Web**（`dsh web`）と公式 **デスクトップ EXE** の両方に対応します。インストールと Apply はそれぞれ別々に行います。
 
 Harness は単にプロンプトを転送するだけではありません。プロンプトの書き換え、承認ゲート、サンドボックスポリシー、セッション移行を実行時に行います。「モデルは答えるか」だけを問うと、ホスト層のブロックをモデルの拒否と取り違えてしまいます。このプラグインは、あなた自身のインストール環境でこの 2 つの層を分離し、制御された評価や、どのデフォルトポリシーが過度に厳しいかを確認するために使います。
 
@@ -79,15 +91,15 @@ Harness は単にプロンプトを転送するだけではありません。プ
 
 ## 要帰属表示
 
-**オリジナルビルドの転売は禁止です。** 有料での転売、スキン変更したストア掲載、グループでの売り込みは禁止です。
+**オリジナルビルドの転売は禁止です。** 有料転売、ストア掲載のための再スキン、商用製品としての配布は許可されません。
 
-**フォークは帰属表示が必須** で、出所のリポジトリを明記してください: [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge)。名前、アイデア、コード、プロンプトを借用する場合も同様です。
+**フォークは帰属表示が必須** で、出所のリポジトリを明記してください: [HandlerOne01/dsh-purge](https://github.com/HandlerOne01/dsh-purge)。名前、アイデア、コード、プロンプトを借用する場合も同様です。
 
-出所を隠す、自分のものとして偽る、オリジナルを転売する行為は追及します。
+帰属表示の削除、出所の隠蔽、オリジナルの転売は、運営チームとして追及します。
 
 ## ライセンス
 
-本リポジトリは [Apache License 2.0](./LICENSE) です。フォークおよび再配布では著作権表示と [NOTICE](./NOTICE) を保持し、[YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge) を明記してください。オリジナルの転売は禁止です。
+本リポジトリは [Apache License 2.0](./LICENSE) です。フォークおよび再配布では著作権表示と [NOTICE](./NOTICE) を保持し、[HandlerOne01/dsh-purge](https://github.com/HandlerOne01/dsh-purge) を明記してください。オリジナルの転売は禁止です。
 
 ---
 
@@ -101,7 +113,7 @@ Harness は単にプロンプトを転送するだけではありません。プ
 
 **免責事項:** 本プロジェクトは非営利のオープンソースプロジェクトです。適用される法律および利用するプラットフォームの規則に従い、学習と研究のみを目的としています。違法または非準拠の目的に使用しないでください。生じた結果は利用者が負います。
 
-**ゼロトレランス声明:** 本プロジェクトはいかなる違法行為にも反対し、禁止します。作者は、未認可のネットワーク攻撃、エクスプロイトの使用、データの窃取、コンピュータ情報システムへの不正侵入、違法または禁止されたコンテンツの生成を支援、奨励、幇助しません。**本プロジェクトを犯罪に使用した者は、法律上すべての責任を単独で負います。作者は一切の責任を負いません。**
+**ゼロトレランス声明:** 本プロジェクトはいかなる違法行為にも反対し、禁止します。運営チームは、未認可のネットワーク攻撃、エクスプロイトの使用、データの窃取、コンピュータ情報システムへの不正侵入、違法または禁止されたコンテンツの生成を支援、奨励、幇助しません。**本プロジェクトを犯罪に使用した者は、法律上すべての責任を単独で負います。運営チームは一切の責任を負いません。**
 
 1. **本リポジトリに違法な素材は含まれません。** 公開されているコード、ドキュメント、パッチ、デフォルトプロンプトは、マルウェア、バックドア、未認可のペンテストキット、ランサムウェア、クレデンシャルスタッフィングスクリプト、公開インターネットや第三者システムを狙う攻撃ペイロードでは **ありません**。本プロジェクトは違法コンテンツを提供せず、犯罪を扇動・組織・幇助しません。
 2. **ローカルの公式 Harness のみ。** セキュリティ評価用パッチとプロンプトインジェクションは、**ユーザーのマシンにすでにインストールされた公式 DeepSeek Harness**（`@deepseek-ai` パッケージ、ローカルプロファイル / `$DSH_HOME`）に対してのみ動作します。対象はユーザー自身の公式ローカルソフトウェアであり、**他人のウェブサイト、サーバー、アカウント、情報システムではありません**。
@@ -118,10 +130,10 @@ Harness は単にプロンプトを転送するだけではありません。プ
    - 公的・私的なコンピュータ情報システムへの未認可の侵入または攻撃；恐喝、破壊、クレデンシャルスタッフィング、悪意あるペイロードの拡散；
    - 国家安全保障への脅威、テロ、暴力、ポルノ、賭博、詐欺、プライバシーや知的財産権の侵害を含む、法律が禁じるあらゆるコンテンツの誘発・生成・拡散；
    - モデル提供者の利用規約および利用許諾ポリシーへの違反。
-7. **利用者がすべての責任を負います。** 本プロジェクトは Apache-2.0 の下で現状のまま提供されます。作者は完全性、安全性、適合性について一切保証しません。**利用者は、ダウンロード、デプロイ、実行、改変、配布、およびそれに伴うすべての入力と出力について、民事・行政・刑事上のすべての責任を独立して負います。** 作者および貢献者は、悪用について直接・間接・連帯のいかなる責任も負いません。
+7. **利用者がすべての責任を負います。** 本プロジェクトは Apache-2.0 の下で現状のまま提供されます。運営チームは完全性、安全性、適合性について一切保証しません。**利用者は、ダウンロード、デプロイ、実行、改変、配布、およびそれに伴うすべての入力と出力について、民事・行政・刑事上のすべての責任を独立して負います。** 運営チームおよび貢献者は、悪用について直接・間接・連帯のいかなる責任も負いません。
 8. **違反時にライセンスは終了します。** 本プロジェクトを違法な攻撃、悪意ある活動、その他の違反に使用した者は、違反の瞬間からオープンソースライセンスが **自動的かつ取り消し不能に終了** します。使用を直ちに停止し、すべての複製と派生物を永久に破棄し、法的制裁を受け入れなければなりません。
 9. **無関係。** 本プロジェクトは独立したオープンソースのセキュリティ評価研究プロジェクトです。DeepSeek またはその関連会社との間に、雇用、商業、認可、推奨のいかなる関係もありません。ここでの「公式」は、評価対象がユーザーのマシン上の公式 DeepSeek Harness パッケージであることだけを意味します。DeepSeek が本プラグインを開発・承認・保証したことを **意味しません**。
-10. **帰属表示は必須です。** 本プロジェクトの名前、アイデア、コード、プロンプトを借用する場合は、作者をクレジットし本リポジトリを明記しなければなりません。帰属表示の不履行は追及します。[要帰属表示](#要帰属表示) を参照してください。
+10. **帰属表示は必須です。** 本プロジェクトの名前、アイデア、コード、プロンプトを借用する場合は、運営チームをクレジットし本リポジトリを明記しなければなりません。帰属表示の不履行は追及します。[要帰属表示](#要帰属表示) を参照してください。
 
 </font>
 
@@ -131,14 +143,14 @@ Harness は単にプロンプトを転送するだけではありません。プ
 
 ## 対応ホスト
 
-**1.1.81 は DSH 0.2.1-rc.2 を対象とします。** 0.2.0 も動作します。0.1.x には適用しないでください。
+**1.2.0 は DSH 0.2.2-rc.5**（npm `latest`）を主対象とし、0.2.1-rc.2 / rc.5 と 0.2.2-rc.1 も引き続き動作します。0.1.x には適用しないでください。
 
-- **dsh 0.2.1-rc.2**（公式デスクトップ / 公式 `dsh web`）: **1.1.81** を使用。`{{cwd}}` / `[cwd]` クラッシュ、patch #40 のマッチ、削除された `toolFilter`、ホスト `dsh-tools` の解決、hostFs の fd、デスクトップヘルパーの自己終了、`file:` アーカイブ更新、Ctrl+Enter ステアを修正。
-- **dsh 0.2.0-rc.2**: **1.1.40** 以降を使用。このラインもインストールできます。
-- **dsh 0.1.7**（rc.1 / rc.2 を含む）: **1.1.39** 以前を使用 — [Releases](https://github.com/YuJunZhiXue/dsh-purge/releases) で該当タグを選択。
-- **dsh 0.2.1-rc.3 / rc.4 以降は非対応です。** マッチしないパッチは pending または skipped のままで、盲目的な書き換えはしません。**0.2.1-rc.2** に留まってください。
+- **dsh 0.2.2-rc.5 / rc.1**（公式デスクトップ / 公式 `dsh web`）: **1.2.0** を使用。0.2.2 のパッケージ構造に合わせて再アンカー済み：PTC 実行器の分離（#60）、tools 承認パイプラインの移設（#62）、成果物プロンプトの独立パッケージ化（#54）、agent-loop のインデントと `assemble` シグネチャ（#67 / #74）、system-prompt への `tools` 追加（#40）、`editIntent` の `requirePresent` 委譲（#17）、承認 ask 文（#12）、圧縮クライアント用フォールバックアンカー（#56 / #77）。
+- **dsh 0.2.1-rc.2 / rc.5**: **1.2.0** を使用。旧アンカーはすべて保持し、ホストの原文に応じて自動的にどちらかが一致します。
+- **dsh 0.2.0-rc.2**: **1.1.40** 以降を使用。このビルドもインストールできます。
+- **dsh 0.1.7**（rc.1 / rc.2）: **1.1.39** 以前を使用 — [Releases](https://github.com/Fire-Phoenixs/dsh-purge/releases) で該当タグを選択。
 
-マッチしないパッチは pending または skipped のままで、盲目的な書き換えはしません。
+一致しないパッチは pending / skipped として表示され、ファイルを無闇に書き換えることはありません。機能が新しいパッケージへ移ったパッチは `partialOk` を持ち、旧パッケージに文言がなくても誤ってドリフト扱いになりません。
 
 ---
 
@@ -152,10 +164,10 @@ PATH に `dsh` があれば、コマンド 1 つ、再起動 1 回、クリッ�
 
 ```sh
 # 公式 `dsh web`
-dsh plugin --profile web add https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master
+dsh plugin --profile web add https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master
 
 # 公式デスクトップ EXE
-dsh plugin --profile desktop add https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master
+dsh plugin --profile desktop add https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master
 ```
 
 1. インストールしたホストを **完全に終了して再起動** します。Web: `dsh web` を停止して起動し直す。デスクトップ: トレイアイコンも終了してから exe を開く。
@@ -180,14 +192,14 @@ pnpm のみ（`dsh` 不要）: リポジトリのルートではなく、実際�
 
 ```sh
 cd "$DSH_HOME/profiles/web"    # desktop: profiles/desktop
-pnpm add https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master
+pnpm add https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master
 ```
 
 Windows PowerShell:
 
 ```powershell
 cd "$env:USERPROFILE\.dsh\profiles\web"   # desktop: profiles\desktop
-pnpm add https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master
+pnpm add https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master
 ```
 
 `pnpm add` と `dsh plugin add` はパッケージを取得します。`postinstall` が `dsh-purge` を `dsh.profile.bundles` に書き込み、プロファイルの `cordis.patch.yml` に body `insert` を追加します。その insert がないとホストはプラグインを読み込まず、ボタンも現れません。
@@ -197,9 +209,9 @@ pnpm add https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/mas
 - pnpm 11/12 はビルドを許可しないとインストールスクリプトをスキップします（`ERR_PNPM_IGNORED_BUILDS`）:
 
 ```sh
-pnpm add --allow-build=dsh-purge --allow-build=dsh-purge@https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master
+pnpm add --allow-build=dsh-purge --allow-build=dsh-purge@https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master
 # すでにインストール済みで警告のみの場合 — 完全な指定子が必要です（名前だけだと "set this to true or false" が残ります）:
-pnpm approve-builds dsh-purge@https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master
+pnpm approve-builds dsh-purge@https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master
 # bundles / insert がまだ無い場合:
 node node_modules/dsh-purge/scripts/ensure-profile-bundle.mjs
 ```
@@ -208,7 +220,7 @@ node node_modules/dsh-purge/scripts/ensure-profile-bundle.mjs
 - デスクトップクライアントではボタンをクリックすることもできます（`dsh://` ディープリンク。同じ tarball をダウンロードします）。
 
 <p align="center">
-  <a href="dsh://plugin/install?id=dsh-purge&name=dsh-purge&version=1.1.81&repo=YuJunZhiXue%2Fdsh-purge&permissions=%E7%B3%BB%E7%BB%9F%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%B3%A8%E5%85%A5%2C%E6%9C%AC%E6%9C%BA%E8%A1%A5%E4%B8%81%2C%E8%AE%BE%E7%BD%AE%E9%A1%B5&downloadUrl=https%3A%2F%2Fcodeload.github.com%2FYuJunZhiXue%2Fdsh-purge%2Ftar.gz%2Frefs%2Fheads%2Fmaster"><strong>デスクトップクライアントでインストール</strong></a>
+  <a href="dsh://plugin/install?id=dsh-purge&name=dsh-purge&version=1.2.0&repo=Fire-Phoenixs%2Fdsh-purge&permissions=%E7%B3%BB%E7%BB%9F%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%B3%A8%E5%85%A5%2C%E6%9C%AC%E6%9C%BA%E8%A1%A5%E4%B8%81%2C%E8%AE%BE%E7%BD%AE%E9%A1%B5&downloadUrl=https%3A%2F%2Fcodeload.github.com%2FFire-Phoenixs%2Fdsh-purge%2Ftar.gz%2Frefs%2Fheads%2Fmaster"><strong>デスクトップクライアントでインストール</strong></a>
 </p>
 
 **ステップ 3 — ホストを再起動する。** プラグインをプロファイルに追加しただけでは、`@deepseek-ai` にパッチは当たりません。インストールしたホストを完全に終了して再起動します（Web: `dsh web` を停止して起動し直す。デスクトップ: トレイアイコンも終了してから exe を開く）。
@@ -226,7 +238,7 @@ node node_modules/dsh-purge/scripts/ensure-profile-bundle.mjs
 
 ```sh
 dsh plugin --profile desktop remove dsh-purge
-dsh plugin --profile desktop add https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master
+dsh plugin --profile desktop add https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master
 ```
 
 pnpm のみ:
@@ -234,7 +246,7 @@ pnpm のみ:
 ```sh
 cd "$DSH_HOME/profiles/desktop"
 pnpm remove dsh-purge
-pnpm add https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master
+pnpm add https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master
 ```
 
 Web では `desktop` を `web` に置き換えます。
@@ -255,13 +267,13 @@ DeepSeek Harness プラグイン `dsh-purge` を Web プロファイルのみに
 `dsh` が PATH にある場合:
 
 ```sh
-dsh plugin --profile web add https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master
+dsh plugin --profile web add https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master
 ```
 
 `dsh` が無く pnpm がある場合は、`$DSH_HOME/profiles/web`（多くは `~/.dsh/profiles/web`）に `cd` して実行:
 
 ```sh
-pnpm add https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master
+pnpm add https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master
 ```
 
 このディレクトリがすでにクローンで `dsh` がある場合は `dsh plugin --profile web add .` を使う。`dsh` も pnpm も無ければ、ユーザーに伝えて停止する。
@@ -299,10 +311,10 @@ $cands | Select-Object -Unique | Where-Object { $_ -and (Test-Path (Join-Path $_
 **2. プラグインを `$DSH_HOME/plugins/dsh-purge` に置く**（フォルダ名は `dsh-purge`、`package.json` の `"name"` も `dsh-purge`）。
 
 ```sh
-git clone https://github.com/YuJunZhiXue/dsh-purge.git "$DSH_HOME/plugins/dsh-purge"
+git clone https://github.com/HandlerOne01/dsh-purge.git "$DSH_HOME/plugins/dsh-purge"
 ```
 
-git が無い場合: [master.tar.gz](https://github.com/YuJunZhiXue/dsh-purge/archive/refs/heads/master.tar.gz) をダウンロードし、展開して `dsh-purge-master` → `dsh-purge` にリネームし、`plugins` 以下に置きます。すでにクローンがある場合は、いくつかの `.js` ファイルではなくツリー全体をコピーしてください。
+git が無い場合: [master.tar.gz](https://github.com/HandlerOne01/dsh-purge/archive/refs/heads/master.tar.gz) をダウンロードし、展開して `dsh-purge-master` → `dsh-purge` にリネームし、`plugins` 以下に置きます。すでにクローンがある場合は、いくつかの `.js` ファイルではなくツリー全体をコピーしてください。
 
 **3. そのプロファイルの `package.json` だけを編集する — まずバックアップ。** Web → `$DSH_HOME/profiles/web/package.json`; desktop → `$DSH_HOME/profiles/desktop/package.json`。既存の依存関係と bundle をすべて残したまま、**2 つだけ** 追加します:
 
@@ -581,14 +593,14 @@ Community Desktop はメンテナンスされていません。
 
 ## リリース
 
-作者の個人チャンネル: [t.me/LLM_PoJia](https://t.me/LLM_PoJia)。メモや更新情報はそこに出ます。GitHub [Releases](https://github.com/YuJunZhiXue/dsh-purge/releases) には古いパッケージもあります。オリジナルの転売は禁止、フォークは帰属表示が必須です。
+運営チームのチャンネル: [t.me/LLM_PoJia](https://t.me/LLM_PoJia)。お知らせと更新情報の配信に使用します。GitHub [Releases](https://github.com/Fire-Phoenixs/dsh-purge/releases) には過去のパッケージもあります。オリジナルビルドの転売は禁止です。フォークは帰属表示が必須です。
 
 ## 備考
 
 - 対象範囲は、ローカルの `@deepseek-ai/*` パッケージ内のレンダリング済みコピー、デフォルト、ランタイムロジック、および harness ホーム以下のオーバーライドファイルとルールセットです。
 - アップグレード後、マッチしないオリジナルは skipped と表示されます。Apply はなお完了し、それらのファイルは変更されません。
 - `@deepseek-ai` 外のサードパーティプラグインの *ソースリポジトリ* には手を付けません（CMD サイレンスは、インストール済みの doctor / market / liangshen / mnemon を実行時に **ベストエフォートで** パッチすることがあります）。
-- GitHub tarball からインストールしてください（名前は npm にありません。プラグインマーケットはスキップ）。`dsh` あり: `dsh plugin --profile web add https://codeload.github.com/YuJunZhiXue/dsh-purge/tar.gz/refs/heads/master`。pnpm のみ: `$DSH_HOME/profiles/web` 内でその URL を `pnpm add`。EXE には `desktop` を使用。このリポジトリからは `add .`。
+- GitHub tarball からインストールしてください（名前は npm にありません。プラグインマーケットはスキップ）。`dsh` あり: `dsh plugin --profile web add https://codeload.github.com/Fire-Phoenixs/dsh-purge/tar.gz/refs/heads/master`。pnpm のみ: `$DSH_HOME/profiles/web` 内でその URL を `pnpm add`。EXE には `desktop` を使用。このリポジトリからは `add .`。
 
 ---
 

@@ -1,3 +1,185 @@
+# 1.2.0
+
+## 中文
+
+- 版本 **1.2.0**，代码基线升到官方 **1.1.91**（HandlerOne01/dsh-purge），并把续作的三件事做完。
+- **主适配 DeepSeek Harness 0.2.2-rc.5**（npm `latest`），同时保留 0.2.1-rc.2 / rc.5 与 0.2.2-rc.1：
+  - 新增 `targetFiles` 键 `dsh-tools-pipeline` / `dsh-tools-pipeline-types` / `tool-executor-ptc` / `tool-executor-ptc-types` / `deliverable-file-references`；
+  - #62 审批 fail-open 重锚到 `dsh-tools/lib/pipeline.js`（`approvalDenial(..., APPROVAL_UNAVAILABLE)` 形态，types 版 8 空格缩进）；
+  - #60 PTC/run_code 文案官方搬到 `dsh-tool-executor-ptc`，pattern 逐字保留、只换宿主；
+  - #54 交付物提示词官方拆到 `dsh-deliverable-file-references`，pattern 逐字保留、只换宿主；
+  - #67 agent-loop 代码被包进 `try`，缩进 4 → 5 个 tab；#74 `preStep` 里 `assemble` 挪进 `try` 且改成多行对象参数；
+  - #40 system-prompt 的 assemble 返回值新增 `tools` 字段、complete 分支改成返回对象；
+  - #17 `editIntent` 改为委托 `requirePresent(target, actor, "edit")`；
+  - #12 审批 ask 句回到 `Approval prompts are enabled in this session: ...`（双引号 / 单引号两份）；
+  - #56 / #77 会话客户端在 0.2.2 被压缩成单行，追加压缩态回退锚点（可读多行候选保留给未压缩的桌面 asar）；
+  - #18 post-execute 不再分 block / accept 两支。
+- **新增 `partialOk` 口径**：功能整体搬到新宿主包时（#54 / #60 / #62），旧包零命中不再压过已应用状态、不再误报「漂移」。默认行为不变，只有显式声明的补丁生效。
+- **修复上游 #92 / #93 非幂等问题**：两条插入型补丁缺 `insertProbe`，连续点「应用」会无限追加代码（#92 实测 121→635→1149→1663 字节、#93 70→1703→3336→4969）。补上 probe 后第二次起 `changed=false`，并加了回归测试。
+- **恢复被删资产**：红队技能库扩到 **40 个**（原作者 23 个原文 + 从社区/满血版吸纳的 17 个：AD、云与 K8s、C2 基建、供应链、社工/移动端、OOB 验证、OpSec、得分覆盖等），提示词中/英/历史三份原样保留，运行槽继续注入新版中文稿（25,727 字节，`[OPERATION: STABLE]`）。
+- **发布元数据全部指向本仓库**：`repository` / `homepage` / `bugs` / `dsh.install` / `lib/update.js` 的 `REPO` / `client.js` 欢迎页 / 红队面板默认仓库 / `release.yml` 发版门 / 三语 README 安装链接。
+- **署名更正**：`LICENSE` / `NOTICE` 补回原作者 YuJunZhiXue，保留上游 HunYiSage / HandlerOne01 的版权行；`LICENSE-COMMERCIAL.md` 注明本续作不代理商业授权。
+- **验证**：对 0.2.2-rc.5 官方包闭包（325 个包）跑锚点体检，12 条死锚清零、漂移 0；再用「备份 → 应用 → 二次应用 → 回滚」全流程验证：应用 57+5 条、二次应用 0 文件漂移、回滚后 16,973 个文件逐字节一致；对真实桌面宿主（0.2.2-rc.1，45 个内置包）同样跑通，回滚 0 不一致；11 个单测全绿。
+
+## English
+
+- **1.2.0**, baseline moved to upstream **1.1.91** (HandlerOne01/dsh-purge), completing the continuation's three goals.
+- **Primarily targets DeepSeek Harness 0.2.2-rc.5** (npm `latest`) while keeping 0.2.1-rc.2 / rc.5 and 0.2.2-rc.1 working:
+  - new `targetFiles` keys `dsh-tools-pipeline` / `dsh-tools-pipeline-types` / `tool-executor-ptc` / `tool-executor-ptc-types` / `deliverable-file-references`;
+  - #62 approval fail-open re-anchored to `dsh-tools/lib/pipeline.js` (`approvalDenial(..., APPROVAL_UNAVAILABLE)` form; the types copy uses 8-space indentation);
+  - #60 the PTC/run_code descriptions moved to `dsh-tool-executor-ptc`; patterns kept verbatim, only the host moved;
+  - #54 the deliverable prompt moved to `dsh-deliverable-file-references`; patterns kept verbatim;
+  - #67 the agent-loop code is now wrapped in `try`, indentation 4 → 5 tabs; #74 `assemble` moved inside `try` with a multi-line object argument;
+  - #40 the system-prompt assembly now returns `tools` and the complete branch returns an object;
+  - #17 `editIntent` now delegates to `requirePresent(target, actor, "edit")`;
+  - #12 the approval ask sentence is back to `Approval prompts are enabled in this session: ...` (both quote styles);
+  - #56 / #77 the conversation client is minified to a single line in 0.2.2; compressed-state fallback anchors added (readable candidates kept for an uncompressed desktop asar);
+  - #18 post-execute no longer branches on block/accept.
+- **New `partialOk` rollup**: when a feature moved to a new host package (#54 / #60 / #62), a legacy package without the text no longer outranks an applied status and no longer reports a false drift. Default behaviour is unchanged; only patches that declare it are affected.
+- **Fixed upstream #92 / #93 non-idempotency**: both insertion patches lacked an `insertProbe`, so repeated Apply appended code forever (#92 121→635→1149→1663 bytes, #93 70→1703→3336→4969). With the probe, the second run reports `changed=false`; a regression test covers it.
+- **Deleted assets restored**: the red-team skill library grows to **40** (the original author's 23 plus 17 absorbed from community/full builds: AD, cloud/K8s, C2 infrastructure, supply chain, social engineering/mobile, OOB verification, OpSec, score coverage, …); the zh/en/history prompt sources are kept and the runtime slot still injects the newer Chinese prompt (25,727 bytes, `[OPERATION: STABLE]`).
+- **Every publish field points at this repository**: `repository` / `homepage` / `bugs` / `dsh.install` / `REPO` in `lib/update.js` / the welcome page in `client.js` / the red-team panel default repo / the `release.yml` gate / the install links in all three READMEs.
+- **Attribution corrected**: `LICENSE` / `NOTICE` name the original author YuJunZhiXue again while keeping the upstream HunYiSage / HandlerOne01 copyright lines; `LICENSE-COMMERCIAL.md` states that this continuation does not broker commercial licences.
+- **Verification**: anchor audit over the official 0.2.2-rc.5 package closure (325 packages) — 12 dead anchors cleared, 0 drift; a full backup → apply → apply-again → revert run applied 57+5 patches, showed 0 file drift on the second apply, and restored all 16,973 files byte-for-byte; the same run against the real desktop host (0.2.2-rc.1, 45 bundled packages) reverted with 0 mismatches; 11 unit tests pass.
+
+# 1.1.91
+
+## 中文
+
+- 版本 **1.1.91**，仓库迁到 [HandlerOne01/dsh-purge](https://github.com/HandlerOne01/dsh-purge)。
+- 原仓库 `HunYiSage/dsh-purge` 已下线（404），更早的 `YuJunZhiXue/dsh-purge` 同样不可用。本次发布以 **1.1.90** 官方发布包为基线重建，业务代码与原发布一致，只改仓库地址与版本号。
+- 包元数据与文档链接全部改指新仓库：`package.json` 的 `repository` / `homepage` / `bugs` / `dsh.install`，`lib/update.js` 的 `REPO`，三语 README，以及 `dsh://` 一键安装链接。
+- `.github/workflows/release.yml` 的发布仓库判断改为新仓库，push 到 `master` 仍会自动打 tag 并上传 zip。
+- 安装/更新地址改用：`https://codeload.github.com/HandlerOne01/dsh-purge/tar.gz/refs/heads/master`。
+
+## English
+
+- **1.1.91**, repository moved to [HandlerOne01/dsh-purge](https://github.com/HandlerOne01/dsh-purge).
+- The previous repository `HunYiSage/dsh-purge` is offline (404), and the earlier `YuJunZhiXue/dsh-purge` is gone as well. This build is rebuilt from the official **1.1.90** release archive; application code is unchanged apart from repository URLs and the version number.
+- All package metadata and documentation links now point at the new repository: `repository` / `homepage` / `bugs` / `dsh.install` in `package.json`, `REPO` in `lib/update.js`, all three READMEs and the `dsh://` one-click install link.
+- The release gate in `.github/workflows/release.yml` now matches the new repository, so a push to `master` still tags and uploads the zip automatically.
+- Install/update URL: `https://codeload.github.com/HandlerOne01/dsh-purge/tar.gz/refs/heads/master`.
+
+# 1.1.90
+
+## 中文
+
+- 版本 **1.1.90**。
+- **#208 Android 切后台回来输入框整块消失**：撤销按钮原先注册在宿主的 `conversation.input.right` 槽位，这个槽位渲染在 composer 的 React 子树里。宿主在提交阶段只要抛一次错，React 会把整棵树卸载，症状就是输入框连带按钮一起没了。
+  - 撤销按钮不再走任何槽位。改为在 `body` 上挂一个 `position: fixed` 的宿主节点，用 `createPortal` 把按钮传进去，渲染树完全脱离 composer；composer 内部再出错也牵连不到它。
+  - 位置按最靠下的那组 `.standardControls`（就是 composer 底部工具条）的矩形实时对齐，并给它留 `padding-left` 空位，不遮住模型选择器；预留宽度跟着按钮实测宽度走。
+  - 会话切换、窗口尺寸变化、页面滚动都会重新对齐；没有会话时按钮不显示、留白也一起归还。
+  - 锚点查找带缓存和节流，只在锚点缺失或掉线时才扫一次 DOM，长会话滚动不受影响。
+- **验证**：`client.js` 语法检查通过；`conversation.input.right` 在本插件中已无任何注册点；双宿主 `standardControls` 类名核对一致。
+
+## English
+
+- **1.1.90**.
+- **#208 the whole composer vanished after switching apps**: the undo button was registered into the host's `conversation.input.right` slot, which renders inside the composer's React subtree. One throw during a commit phase makes React unmount that tree, and the input box goes with it.
+  - The undo button no longer uses any slot. It renders through `createPortal` into a `position: fixed` host appended to `body`, fully outside the composer subtree, so a composer error can no longer take it down.
+  - It aligns itself to the rectangle of the bottom-most `.standardControls` (the composer toolbar) and reserves `padding-left` there so the model picker is not covered; the reserved width follows the button's measured width.
+  - It re-aligns on session change, resize and scroll, and releases both the button and the reserved space when there is no session.
+  - Anchor lookup is cached and throttled: the DOM is scanned only when the anchor is missing or detached, so long chats keep scrolling smoothly.
+- **Verification**: `client.js` passes the syntax check; no `conversation.input.right` registration remains in the plugin; the `standardControls` class name matches on both hosts.
+
+# 1.1.89
+
+## 中文
+
+- 版本 **1.1.89**。
+- **#204 工作目录提示恢复**：`deployment:persona-suffix` 优先写会话真实 cwd 字面量（`interpolate: false`），拿不到才退静态描述；同时把 `cwd` 补进 `assembly.variables`，用户自己模板里的 `{{cwd}}` 也能渲染。0.2.1 不再抛 `unknown prompt variable`，工作目录提示不再变成 `the current workspace`。
+- **#207 桌面静默退出可诊断**：
+  - 新增 #92：宿主每次退出都把 `code` / `signal` / stderr 尾巴写进 `%TEMP%\dsh-purge-desktop.log`（不再只记 signal 分支）。
+  - 新增 #93：主进程记录 `boot` / `before-quit` / `will-quit` / `quit code` / `window-all-closed` / `render-process-gone`（附渲染进程最后几行 console）/ `child-process-gone` / 信号 / 每分钟心跳。只用 `uncaughtExceptionMonitor`，不改变崩溃行为。
+  - asar 换包脚本：`Move-Item` 失败后改用 `.NET File.Move` 重试，成功/失败都 `Test-Path` 复核并记录真实错误；空闲改名脚本同样记录失败原因（限流，不刷屏）。
+- **#202 原子写**：`atomicWriteFile` 保持 `writeFile + rename`（不依赖 hostFs 白名单里没有的 `open`）；CLI `--apply` 成功后补打应用戳，下次启动 settle 不会误判未对齐再重打。
+- **修复重复标记**：#32 / #53 的 export 行锚点原来自我匹配，每点一次「应用」就多追加一行注释；改成带负向前瞻的正则，连续应用保持幂等。
+- **验证**：web + desktop 双宿主现有补丁全部 applied；rc.2 夹具与 rc.5 实机 pattern 全绿；沙箱 42 个目标文件 apply/revert 字节级还原；生成的 PowerShell 脚本通过 `Parser::ParseFile` 语法检查。
+
+## English
+
+- **1.1.89**.
+- **#204 working directory restored**: the persona suffix now uses the real session cwd as a literal (`interpolate: false`) and only falls back to the static sentence when no cwd is available; `cwd` is also added to `assembly.variables`, so user templates with `{{cwd}}` render. 0.2.1 no longer throws `unknown prompt variable`, and the prompt keeps the real path instead of `the current workspace`.
+- **#207 desktop exit is diagnosable**:
+  - New #92: every host exit writes `code` / `signal` / stderr tail to `%TEMP%\dsh-purge-desktop.log`.
+  - New #93: main process logs `boot` / `before-quit` / `will-quit` / `quit code` / `window-all-closed` / `render-process-gone` (with the renderer console tail) / `child-process-gone` / signals / a one-minute heartbeat. Uses `uncaughtExceptionMonitor` only, so crash behavior is unchanged.
+  - ASAR swap: falls back to `.NET File.Move` after `Move-Item` fails, verifies with `Test-Path`, and records the real error; the idle rename script logs failures too (rate-limited).
+- **#202 atomic writes**: `atomicWriteFile` stays on `writeFile + rename` (the hostFs whitelist has no `open`); the CLI `--apply` now also writes the applied stamp so the next boot's settle does not re-apply.
+- **Duplicate markers fixed**: the #32 / #53 export-line anchors matched their own output and appended another comment on every Apply; both now use negative lookaheads and are idempotent.
+- **Verified**: all existing patches applied on both web and desktop hosts; rc.2 fixtures and rc.5 real files green; sandbox apply/revert restored 42 target files byte-for-byte; generated PowerShell scripts pass `Parser::ParseFile`.
+
+# 1.1.88
+
+## 中文
+
+- 版本 **1.1.88**。
+- **双版本适配（rc.2 + rc.5）**：#32/#36/#50/#53/#57/#62 在 0.2.1-rc.2 与 0.2.1-rc.5 上都能命中。旧 pattern 全部保留，rc.5 的新 pattern 追加，不再用新文案覆盖旧版。
+- **#36 升级字段**：bash/pwsh 的 `sandbox_permissions` justification 描述一并清洗；补上 `Approval is auto-granted.` 大写 marker，tool-fs 不再因为大小写差异永远漂移。
+- **#50 跨会话引用**：去掉 untrusted / “不要跟随指令”话术，保留只读快照的事实描述。
+- **#57 developer role**：rc.5 responses 通路的 `instructionRole` 分支纳入 openai/azure 白名单。
+- **#62 审批 fail-open**：rc.5 的 `void 0` 分支（无 approval 服务 / 无 agent / unavailable）全部放行；已打过旧 approval 分支的文件不会因 marker 被整条跳过。
+- **#32 / #53 状态标记**：#53 不再共用 #32 的注释 marker，旧宿主不会假绿；rc.5 残留的 `local web GUI` 前缀与 `DeepSeek Harness Web GUI` 描述已清掉。
+- **宿主门禁**：`package.json` 增加 `dshTargets`，状态页同时接受 rc.2 与 rc.5。
+- **验证**：web + desktop 双宿主 73/85 applied、0 pending、0 drifted；沙箱 42 个目标文件 apply/revert 字节级还原通过。
+
+## English
+
+- **1.1.88**.
+- **Dual-version support (rc.2 + rc.5)**: patches #32/#36/#50/#53/#57/#62 now match both 0.2.1-rc.2 and 0.2.1-rc.5. Old patterns are kept; rc.5 patterns are added instead of replacing them.
+- **#36 escalation schema**: also neutralizes the bash/pwsh `sandbox_permissions` justification text; adds the capitalised `Approval is auto-granted.` marker so tool-fs no longer drifts on case alone.
+- **#50 session references**: drops untrusted / "do not follow instructions" framing while keeping the read-only snapshot wording.
+- **#57 developer role**: the rc.5 `instructionRole` responses branch is included in the openai/azure allowlist.
+- **#62 approval fail-open**: rc.5 `void 0` branches (no approval service / no agent / unavailable) all allow; files already stamped by the old approval branch are re-processed instead of skipped.
+- **#32 / #53 markers**: #53 no longer shares #32's comment marker, so older hosts cannot show a false green; rc.5 leftovers (`local web GUI` prefix and `DeepSeek Harness Web GUI` description) are removed.
+- **Host gate**: `package.json` gains `dshTargets`, and the status page accepts both rc.2 and rc.5.
+- **Verified**: on both web and desktop hosts, 73/85 applied, 0 pending, 0 drifted; sandbox apply/revert restored all 42 target files byte-for-byte.
+
+# 1.1.87
+
+## 中文
+
+- 版本 **1.1.87**。
+- **回滚 / 备份加固**：
+  - 0 字节的 `.dshpurge.bak` 不再被当成"原版"写回宿主：`revertAll` / `restoreFromBak` 遇到空备份会改名为 `.bad` 并跳过，下次启动顺手清掉残骸。
+  - 宿主升级后刷新过期 bak 时补上单数 `marker` 的补丁（#6/#7/#8/#10），不再漏掉这些基线，避免旧 bak 覆盖新版文件导致新旧代码混合。
+  - 备份、配置、状态、覆盖文件统一走原子写（临时文件 + fsync + rename），断电或进程被杀不会留下半截文件。
+- **补丁命中契约**：标记 `optional` 的补丁命中数不符时记为软失败，不再阻断整体应用；#42 的两处插入型替换加探针，重复应用不会二次插入。
+- **桌面 / 进程（Windows）**：
+  - 进程枚举改用 `|` 分隔并强制 UTF-8 输出，修复中文安装路径下换包时旧进程杀不掉的问题。
+  - helper 只有在确实拿到 exe 路径时才带 `killApp`；换包失败会把原版重新拉起并写日志，不再留空桌面。
+- **安全加固**：
+  - asar 解包校验输出路径必须位于目标目录内，越界条目跳过并告警。
+  - 红队文件读写路径校验对最近存在的祖先做 `realpath`，堵住 symlink 逃逸。
+  - 更新检查只允许 `https`。
+  - 报告回放生成的 curl / HTTP 报文对头部、Cookie、请求体去除换行，防注入。
+- **提示词 / 运行钩子**：插件停用后 `rewriteFn` 直接返回宿主原始装配文本，不再残留注入；停用时清理 assemble guard；运行时缓存签名纳入红队设置、策略与 override 版本，状态变化立即生效。
+- **红队演练台**：`listEngagements` 默认不再逐条统计；漏洞列表与报告支持 `evidenceLimit`，大证据不再拖慢面板。
+- **子代理**：名额占位改为立即占用（`n+1`），append 失败时回退，避免并发派出超限。
+- **CLI**：`--apply` 存在失败项时以退出码 1 结束，脚本调用能感知失败。
+- **清理**：删除无引用的 `lib/mnemon-settings.js` 及 13 处死代码 / 未使用的 import；移除 `test/` 目录与 `test` 脚本，发布 CI 只做语法检查。
+
+## English
+
+- **1.1.87**.
+- **Rollback / backup hardening**:
+  - A zero-byte `.dshpurge.bak` is no longer treated as the original and written back to the host: `revertAll` / `restoreFromBak` rename it to `.bad` and skip it; leftovers are swept on the next start.
+  - When refreshing stale backups after a host upgrade, patches that use the singular `marker` form (#6/#7/#8/#10) are now included, so their baseline is not missed and an old backup can no longer overwrite the new file.
+  - Backups, config, state and override files are written atomically (temp file + fsync + rename), so a crash never leaves a half-written file.
+- **Patch hit contract**: `optional` patches that miss their expected hit count are recorded as soft failures instead of blocking the whole apply; the two insert-type replacements in #42 gained probes so re-applying does not insert twice.
+- **Desktop / processes (Windows)**:
+  - Process enumeration now uses `|` separators and forces UTF-8 output, fixing the case where the old process survived an asar swap under a Chinese install path.
+  - The helper passes `killApp` only when an exe path is known; a failed swap relaunches the original app and writes a log instead of leaving an empty desktop.
+- **Security hardening**:
+  - Asar extraction verifies each output path stays inside the destination directory; entries outside are skipped with a warning.
+  - Red-team path validation resolves `realpath` for the nearest existing ancestor, closing the symlink escape.
+  - Update checks accept `https` only.
+  - Curl / HTTP replay text strips newlines from headers, cookies and body to prevent injection.
+- **Prompt / runtime hooks**: after the plugin is disabled, `rewriteFn` returns the host's assembled prompt unchanged and the assemble guard is cleared; the runtime cache signature now includes red-team settings, policy and override revision so changes take effect immediately.
+- **Red-team console**: `listEngagements` no longer computes per-row stats by default; vuln lists and reports accept `evidenceLimit` so large evidence no longer slows the panel.
+- **Subagents**: slot reservation now takes effect immediately (`n+1`) and rolls back if the append fails, preventing over-limit dispatch under concurrency.
+- **CLI**: `--apply` exits with code 1 when any item failed, so scripts can detect the failure.
+- **Cleanup**: removed the unreferenced `lib/mnemon-settings.js` plus 13 dead functions / unused imports; dropped the `test/` directory and `test` script — release CI now runs syntax checks only.
+
 # 1.1.86
 
 ## 中文
@@ -990,32 +1172,32 @@
 
 ## 涓枃
 
-- **淇 [#43](https://github.com/YuJunZhiXue/dsh-purge/issues/43)**锛氫笉鍐嶆妸 `profiles/*/cordis.patch.yml`锛堢敤鎴?patch 灞傦級绾冲叆 `backupAll`/`revertAll`锛涘崌绾ц嚜鎰堟椂涓嶄細鐢ㄦ棫 bak 瑕嗙洊鐢ㄦ埛鍚庢潵杩藉姞鐨?`insert`銆?- 鍚姩/杩樺師鏃朵富鍔ㄤ涪鎺夊巻鍙蹭笂璇缓鐨?`cordis.patch.yml.dshpurge.bak`锛屼繚鐣欏綋鍓嶇敤鎴锋枃浠躲€?- 鏂板 `npm run test:profile-patch`銆?
+- **淇 [#43](https://github.com/HandlerOne01/dsh-purge/issues/43)**锛氫笉鍐嶆妸 `profiles/*/cordis.patch.yml`锛堢敤鎴?patch 灞傦級绾冲叆 `backupAll`/`revertAll`锛涘崌绾ц嚜鎰堟椂涓嶄細鐢ㄦ棫 bak 瑕嗙洊鐢ㄦ埛鍚庢潵杩藉姞鐨?`insert`銆?- 鍚姩/杩樺師鏃朵富鍔ㄤ涪鎺夊巻鍙蹭笂璇缓鐨?`cordis.patch.yml.dshpurge.bak`锛屼繚鐣欏綋鍓嶇敤鎴锋枃浠躲€?- 鏂板 `npm run test:profile-patch`銆?
 ## English
 
-- **Fix [#43](https://github.com/YuJunZhiXue/dsh-purge/issues/43)**: stop including `profiles/*/cordis.patch.yml` (user patch layer) in `backupAll`/`revertAll`, so upgrade reapply no longer restores an old bak over later user `insert`s.
+- **Fix [#43](https://github.com/HandlerOne01/dsh-purge/issues/43)**: stop including `profiles/*/cordis.patch.yml` (user patch layer) in `backupAll`/`revertAll`, so upgrade reapply no longer restores an old bak over later user `insert`s.
 - Drop stale `cordis.patch.yml.dshpurge.bak` without restoring; keep the live user file.
 - Add `npm run test:profile-patch`.
 # 1.1.24
 
 ## 涓枃
 
-- **淇 [#40](https://github.com/YuJunZhiXue/dsh-purge/issues/40)**锛歚pathLooksDesktop` 涓嶅啀浠呭嚟璺緞閲岀殑 `deepseek-harness` 瀛愪覆鎶婃簮鐮佺増鍒ゆ垚妗岄潰绔紱闇€甯?`resources/` / `.exe` / `.app` 绛夊畨瑁呭舰鎬併€?- **淇 [#41](https://github.com/YuJunZhiXue/dsh-purge/issues/41)**锛氭簮鐮侀儴缃茬殑 `apps/cli`锛坱sdown 鏋勫缓浜х墿锛夌姝?hide-console 娉ㄥ叆锛沗revertAll` 鍦ㄦ棤 `.dshpurge.bak` 鏃跺彧璺宠繃銆佺粷涓嶅垹闄ょ洰鏍囨枃浠躲€?- 鏂板 `npm run test:surface` 鍥炲綊銆?
+- **淇 [#40](https://github.com/HandlerOne01/dsh-purge/issues/40)**锛歚pathLooksDesktop` 涓嶅啀浠呭嚟璺緞閲岀殑 `deepseek-harness` 瀛愪覆鎶婃簮鐮佺増鍒ゆ垚妗岄潰绔紱闇€甯?`resources/` / `.exe` / `.app` 绛夊畨瑁呭舰鎬併€?- **淇 [#41](https://github.com/HandlerOne01/dsh-purge/issues/41)**锛氭簮鐮侀儴缃茬殑 `apps/cli`锛坱sdown 鏋勫缓浜х墿锛夌姝?hide-console 娉ㄥ叆锛沗revertAll` 鍦ㄦ棤 `.dshpurge.bak` 鏃跺彧璺宠繃銆佺粷涓嶅垹闄ょ洰鏍囨枃浠躲€?- 鏂板 `npm run test:surface` 鍥炲綊銆?
 ## English
 
-- **Fix [#40](https://github.com/YuJunZhiXue/dsh-purge/issues/40)**: `pathLooksDesktop` no longer treats source trees as desktop just because the path contains `deepseek-harness`; require install shapes (`resources/`, `.exe`, `.app`).
-- **Fix [#41](https://github.com/YuJunZhiXue/dsh-purge/issues/41)**: skip hide-console injection into source `apps/cli` build output; `revertAll` never deletes targets when `.dshpurge.bak` is missing.
+- **Fix [#40](https://github.com/HandlerOne01/dsh-purge/issues/40)**: `pathLooksDesktop` no longer treats source trees as desktop just because the path contains `deepseek-harness`; require install shapes (`resources/`, `.exe`, `.app`).
+- **Fix [#41](https://github.com/HandlerOne01/dsh-purge/issues/41)**: skip hide-console injection into source `apps/cli` build output; `revertAll` never deletes targets when `.dshpurge.bak` is missing.
 - Add `npm run test:surface`.
 # 1.1.23
 
 ## 涓枃
 
-- **淇 [#38](https://github.com/YuJunZhiXue/dsh-purge/issues/38)**锛歚#1`/`#2`/`#3` 鎻愮ず璇嶈ˉ涓佹瘡娆?`apply` 鍙犲姞绾?+841 瀛楃銆佹案涓嶆敹鏁涖€?- **鍘熷洜**锛氭浛鎹骇鐗╀粛浠ュ墠涓€鐗堟枃鏈负鍓嶇紑锛屼笖鏈 `skipIfMarked`锛宍autoApplyOnStart` 姣忚疆閮戒細鍐嶅啓涓€灞傘€?- **淇**锛氫负 `#1`/`#2`/`#3` 琛?`skipIfMarked: true`锛圼#42](https://github.com/YuJunZhiXue/dsh-purge/pull/42)锛夛紝骞跺姞 `npm run test:idempotence` 鍥炲綊銆?- 宸茶啫鑳€鐨勫涓绘枃浠朵笉浼氳嚜鍔ㄧ缉鍥烇紝闇€杩樺師 `.dshpurge.bak` 鎴栭噸瑁?dsh 鍚庡啀 apply銆?
+- **淇 [#38](https://github.com/HandlerOne01/dsh-purge/issues/38)**锛歚#1`/`#2`/`#3` 鎻愮ず璇嶈ˉ涓佹瘡娆?`apply` 鍙犲姞绾?+841 瀛楃銆佹案涓嶆敹鏁涖€?- **鍘熷洜**锛氭浛鎹骇鐗╀粛浠ュ墠涓€鐗堟枃鏈负鍓嶇紑锛屼笖鏈 `skipIfMarked`锛宍autoApplyOnStart` 姣忚疆閮戒細鍐嶅啓涓€灞傘€?- **淇**锛氫负 `#1`/`#2`/`#3` 琛?`skipIfMarked: true`锛圼#42](https://github.com/HandlerOne01/dsh-purge/pull/42)锛夛紝骞跺姞 `npm run test:idempotence` 鍥炲綊銆?- 宸茶啫鑳€鐨勫涓绘枃浠朵笉浼氳嚜鍔ㄧ缉鍥烇紝闇€杩樺師 `.dshpurge.bak` 鎴栭噸瑁?dsh 鍚庡啀 apply銆?
 ## English
 
-- **Fix [#38](https://github.com/YuJunZhiXue/dsh-purge/issues/38)**: prompt patches `#1`/`#2`/`#3` grew by ~+841 chars on every `apply` and never converged.
+- **Fix [#38](https://github.com/HandlerOne01/dsh-purge/issues/38)**: prompt patches `#1`/`#2`/`#3` grew by ~+841 chars on every `apply` and never converged.
 - **Cause**: replacement text still starts with the previous pattern, and `skipIfMarked` was missing, so `autoApplyOnStart` rewrote every boot.
-- **Fix**: set `skipIfMarked: true` on `#1`/`#2`/`#3` ([#42](https://github.com/YuJunZhiXue/dsh-purge/pull/42)); add `npm run test:idempotence`.
+- **Fix**: set `skipIfMarked: true` on `#1`/`#2`/`#3` ([#42](https://github.com/HandlerOne01/dsh-purge/pull/42)); add `npm run test:idempotence`.
 - Already-bloated host files are not auto-shrunk 鈥?restore `.dshpurge.bak` or reinstall dsh, then apply again.
 
 # 1.1.22

@@ -1,32 +1,32 @@
-# 资产保留说明（COMPAT-NOTICE）
+# 资产保留与适配说明（COMPAT-NOTICE）
 
-本仓库是 [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge)（原作者：叫我小杨同学）的**续作 / 资产保留版**。
-原作者在 2026-09-18 的 issue #27 中声明不再提供提示词，并在 2026-10-23 的「1.1.73: open-source local-lab only; drop skills and knowledge base」提交中删除了随包技能库与知识库。
+本仓库是 **dsh-purge 的续作**，做两件事：**把上游删掉的东西放回来**，以及**让它跑在最新版 DeepSeek Harness 上**。
 
-本仓库在不改动原作者声明与署名要求的前提下，做两件事：
+## 一、血缘：一次换库，两次换人
 
-1. **跟随上游功能更新**：代码基线始终对齐上游 `master`（当前 `v1.1.86`），上游修什么、加什么，这里就同步什么。
-2. **保留被删除的资产**：把上游已从仓库删除、但插件代码仍然支持的内容放回来，让它继续可用。
+| 阶段 | 仓库 | 说明 |
+| --- | --- | --- |
+| 原始 | `YuJunZhiXue/dsh-purge` | 原作者「叫我小杨同学」。2026-09-18 的 issue #27 声明不再提供提示词，1.1.73 删除 `skills/` 与知识库。仓库已 404，git 历史、issue、release 无法恢复。 |
+| 官方接续 ① | `HunYiSage/dsh-purge` | 官方发布到 **1.1.90**，仓库已 404。 |
+| 官方接续 ② | `HandlerOne01/dsh-purge` | 以 1.1.90 官方发布包重建，发布 **1.1.91**（2026-11-10）后未再更新。**本续作的代码基线就是它。** |
+| 本仓库 | `Fire-Phoenixs/dsh-purge` | 在 1.1.91 基础上恢复资产、适配 0.2.2-rc.5、修上游 bug。 |
 
-## 保留了哪些被删内容
+原作者与两任上游维护者的版权、NOTICE、商用限制全部保留，见 [LICENSE](./LICENSE)、[NOTICE](./NOTICE)、[LICENSE-COMMERCIAL.md](./LICENSE-COMMERCIAL.md)。
 
-### 1. 红队技能库 `skills/redteam/`（23 个技能）
+## 二、恢复了什么
 
-上游 1.1.73 删除了 `skills/` 整个目录，但**加载逻辑并没有删**：
+### 1. 红队技能库 `skills/redteam/`（40 个）
 
-- `lib/index.js` 仍会把包内 `skills/redteam/*.md` 同步到 `$DSH_HOME/redteam/skills`；
-- `lib/redteam/skill-availability.js` 仍以「本包 `skills/redteam`」作为候选技能根；
-- `presets/redteam/agent.cordis.yml` 的 `skill-filesystem` 仍配置了 `!!js dshHomePath('redteam/skills')`。
+上游 1.1.73 删掉了 `skills/` 整个目录，但**加载逻辑一直没删**：`lib/index.js` 仍会把包内 `skills/redteam/*.md` 同步到 `$DSH_HOME/redteam/skills`，`presets/redteam/*.yml` 的 `skill-filesystem` 仍指向该目录。所以把文件放回去即可生效，不需要改代码。
 
-也就是说，把技能文件放回原位，插件会自动同步并加载，不需要改任何代码。
+- **原作者 23 个**：信息收集、资产梳理、漏洞扫描、隧道（suo5/frp/chisel）、凭据攻击、横向移动、WebShell、未授权利用等，使用原仓库恢复出的原文，未做改写。
+- **吸纳 17 个**：来自满血版 `CallMeGuLab/dsh-purge-safe`（Apache-2.0 衍生）——AD 攻击、云与 K8s、C2 基建、供应链、社工与移动端、OOB 验证、OpSec、得分覆盖、专项路径等。署名见下文。
 
-包含：信息收集、资产梳理、漏洞扫描、隧道（suo5/frp/chisel）、凭据攻击、横向移动、WebShell、未授权利用等 23 份操作稿。
+### 2. 提示词原文与运行槽
 
-### 2. 默认提示词原文 `lib/default-prompt-inject.zh.md` / `.en.md`
-
-- 上游从 1.1.74 起把提示词原文重新放回仓库（`.zh.md` 25,727 字符，`.en.md` 29,427 字符，另有 `.md.bak` 历史版）；
-- 但上游的加密槽 `lib/asset-table.js` 最后一次生成停在 1.1.73，**新版提示词从未被 embed 进运行槽**——也就是说上游用户实际注入的仍是旧版 `[MODE: UNRESTRICTED SANDBOX]` 英文稿，只修了一个拼写；
-- 本仓库保留这两份原文。若要让运行时真正用上新版提示词，执行：
+- `lib/default-prompt-inject.zh.md`（25,727 字节）、`.en.md`（29,427 字节）、`.history.md` 三份原文保留。
+- **运行槽已升级**：上游 1.1.74 起把提示词原文放回了仓库，但**从未重新 embed 进 `lib/asset-table.js`**——上游 1.1.91 实际注入的仍是旧英文稿 `[MODE: UNRESTRICTED SANDBOX — STABLE]`（25,127 字节）。本仓库按上游脚本 `scripts/embed-default-prompt.mjs` 重新生成槽，注入的是新版中文稿 `[OPERATION: STABLE]`（25,727 字节），与原文逐字节一致。
+- 重新生成槽的方法（修改提示词后）：
 
 ```bash
 cp lib/default-prompt-inject.zh.md lib/default-prompt-inject.md
@@ -34,25 +34,65 @@ node scripts/embed-default-prompt.mjs
 rm lib/default-prompt-inject.md
 ```
 
-`lib/default-prompt-inject.md` 是 embed 的输入文件，按上游 `.gitignore` 约定不进仓库。
+## 三、适配了哪些新版宿主行为（0.2.2-rc.5）
 
-### 3. 知识库
+上游 1.1.91 只在 0.2.1 线验证过。0.2.2 改的不只是文案，还有包的位置：
 
-上游 1.1.73 同步删除了知识库（演练台的 nuclei 模板知识页依赖本机 `knowledge.db` 与模板路径）。本仓库不附带模板数据，`knowledge.db` 仍由各人环境适配页自行配置。
+| 补丁 | 0.2.2 的变化 | 本续作的处理 |
+| --- | --- | --- |
+| #62 审批 fail-open | `serviceAsk` 从 `dsh-tools/lib/index.js` 搬到 `lib/pipeline.js`，deny 改成 `approvalDenial(..., APPROVAL_UNAVAILABLE)` | 新增 `dsh-tools-pipeline` / `-types` 键，补 3+3 条候选 |
+| #60 run_code 文案 | PTC 执行器拆成独立包 `dsh-tool-executor-ptc` | 新增对应键，pattern 逐字保留 |
+| #54 交付物提示词 | 拆成独立包 `dsh-deliverable-file-references` | 新增键，pattern 逐字保留 |
+| #67 loop 守卫 | 代码被包进 `try`，缩进 +1 | 追加 5 tab 候选 |
+| #74 assemble 前置 | `assemble` 挪进 `try`、改多行对象参数 | 追加新候选 |
+| #40 complete prompt 保注入 | assemble 返回值新增 `tools` | 追加 rc.5 专用候选 |
+| #17 观测豁免 | `editIntent` 委托 `requirePresent` | 追加新候选 |
+| #12 审批 ask 句 | 回到 `Approval prompts are enabled in this session: ...` | 追加双/单引号两条候选 |
+| #56 / #77 rewind UI | 会话客户端被压缩成单行 | 追加压缩态回退锚点（取自社区版实测命中） |
+| #18 重复工具提醒 | post-execute 不再分 block/accept | 追加新候选 |
+| #13 / #14 / #34 / #35 沙箱升级 | 升级失败改抛 `SandboxEscalationError`、`displayReason` 抽成函数 | 追加 rc.3+ 写法候选 |
 
-## 署名与权利
+新增的 `targetFiles` 键都**与旧键并存**：旧宿主用旧键、新宿主用新键，靠候选锚点按原文自动择一命中，不写死版本号。
 
-- 原始代码、原始提示词、项目名称、思路的一切权利与署名均归原作者 **YuJunZhiXue（叫我小杨同学）**。
-- 上游 `LICENSE`（Apache-2.0）、`NOTICE`、`LICENSE-COMMERCIAL.md` 及 README 中的署名要求、违规商用公示、法律免责声明**全部原样保留**，任何二次开发同样适用。
-- 本项目非盈利公益性质，严禁任何主体用于商业售卖、付费倒卖或黑灰产牟利，仅供技术参考与授权范围内的安全评测。
+### 新增 `partialOk` 口径
 
-## 发布前必须替换的字段
+上游 1.1.91 让「漂移」压过「已应用」：多文件补丁里只要有一份文件对不上就整体报 drifted。这对「功能整体搬到新包」的补丁会误报。本续作给 #54 / #60 / #62 显式标记 `partialOk`：**旧包零命中 + 新包写成功 → 记为 applied**；旧包、新包都对不上时仍然报 drifted。默认行为不变。
 
-本仓库从上游复制时保留了上游的仓库地址。建立你自己的仓库后，需要把这些字段改成新地址，否则安装与更新会指回原作者：
+## 四、修了上游一个真 bug
+
+上游 1.1.91 新增的 #92 `DESKTOP_HOST_EXIT_TRACE` / #93 `DESKTOP_MAIN_EXIT_TRACE` 是**插入型补丁**：`pattern` 在产物里仍然存在，却缺少 `insertProbe` 守卫，而 `applyPatches` 每轮都会无条件跑一遍替换。结果是**每点一次「应用」，代码就多插一段**：
+
+- #92：121 → 635 → 1,149 → 1,663 字节 …
+- #93：70 → 1,703 → 3,336 → 4,969 字节 …
+
+本续作给两条补丁补上 `insertProbe`（与 #42 / #53 同一机制），第二次起 `changed=false`，并加了「连续 apply 3 次，第 2/3 次必须不变」的回归测试。
+
+## 五、吸纳来源与署名
+
+| 来源 | 吸纳内容 | 方式 |
+| --- | --- | --- |
+| 满血版 `CallMeGuLab/dsh-purge-safe` v2.0.1（Apache-2.0） | 17 个红队技能；0.2.2 锚点写法参考 | 技能文件整体引入并在本文件署名；锚点按 0.2.2-rc.5 原文重写验证 |
+| 社区版 `kingcharleslzy-ai/dsh-purge` 1.7.20（MIT） | 压缩版会话客户端的回退锚点（#56 / #77） | 锚点直接采用，按 rc.5 产物实测命中 |
+| 官方 1.1.91（HandlerOne01） | 全部代码基线 | 未改写业务逻辑，改动集中在补丁候选表与 targetFiles |
+
+上述来源的版权与许可声明分别归其各自作者；本仓库的分发不对它们作出任何额外授权，商用仍须按原作者要求申请。
+
+## 六、验证结果
+
+- **锚点体检**（0.2.2-rc.5 官方包闭包，325 个包）：起始 12 条死锚 → 0 条死锚、0 条漂移；剩余 5 条为 `optional` 软补丁（宿主已移除对应功能或属第三方插件文件）。
+- **全流程**（备份 → 应用 → 再应用 → 回滚）：应用 57 + 5 条；第二次应用 0 文件漂移；回滚后 16,973 个文件逐字节一致。
+- **真实桌面宿主**（本机 0.2.2-rc.1，45 个内置包）：应用 62 条，回滚 0 不一致，幂等 0 漂移。
+- **单元测试**：11/11 通过（`node test/<file>.test.js` 逐个跑；`node --test` 在受限环境会因 spawn EPERM 失败）。
+
+## 七、发布前需要替换的字段（给二次 fork）
+
+本仓库已把下列字段指向 `Fire-Phoenixs/dsh-purge`。你若再 fork，记得改回自己的地址，否则安装与更新会指回本仓库：
 
 | 位置 | 字段 |
 | --- | --- |
-| `package.json` | `repository.url`、`homepage`、`bugs.url` |
-| `package.json` | `dsh.install.tarball`、`dsh.install.zip`、`dsh.install.git` |
-| `README.md` / `README.zh-CN.md` | 安装命令里的 tarball 链接 |
+| `package.json` | `repository.url`、`homepage`、`bugs.url`、`dsh.install.{tarball,zip,git}` |
+| `README*.md` | 安装命令与 `dsh://plugin/install` 一键安装链接 |
 | `.github/workflows/release.yml` | 发版仓库门 `if: github.repository == ...` |
+| `lib/update.js` | `REPO` |
+| `client.js` | 欢迎页 `welcome.repo` |
+| `lib/redteam/ui.js` | 面板默认仓库回退值 |

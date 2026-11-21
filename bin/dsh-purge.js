@@ -2,6 +2,7 @@
 
 import * as core from "../lib/core.js";
 import * as rules from "../lib/rules.js";
+import * as reapply from "../lib/reapply.js";
 
 const args = process.argv.slice(2);
 
@@ -98,7 +99,18 @@ async function main() {
     } else {
       console.log("  ⚠ 未定位 shim 目录，跳过注入");
     }
+    const failed = core.summarizeApplyReport(report).failed || [];
     console.log("");
+    if (failed.length > 0) {
+      console.log(`✗ 完成但有 ${failed.length} 个补丁失败 / finished with ${failed.length} failed patch(es)`);
+      process.exit(1);
+    }
+    // 面板点应用会打戳；CLI 也要打，否则下次启动 settle 以为没对齐又重打一遍（#202）。
+    try {
+      reapply.markPatchesApplied();
+    } catch (e) {
+      console.log(`  ⚠ 写入应用记录失败 / failed to write applied stamp: ${e && e.message ? e.message : e}`);
+    }
     console.log("全部完成 / All done。重启 dsh 生效 / Restart dsh to take effect.");
   } else if (mode === "--revert") {
     if (state.ai_base || core.enumeratePatchAiBases().length) {
@@ -128,6 +140,13 @@ async function main() {
     if (!result.ok) {
       console.log("  卸载中止：还原失败，插件文件未删除。");
       process.exit(1);
+    }
+    /* 命令行卸载没有「重启后助手」这一步：插件目录不会自己消失，得在这里删。
+       （界面卸载是把这一步交给独立助手，等端口释放后再删。） */
+    const fs = await import("node:fs");
+    for (const dir of result.cleanup || []) {
+      try { fs.rmSync(dir, { recursive: true, force: true, maxRetries: 8, retryDelay: 120 }); }
+      catch (e) { console.log(`  ⚠ 未能删除 ${dir}: ${e && e.message ? e.message : e}`); }
     }
     console.log("");
     console.log("卸载完成。请重启 dsh。");
