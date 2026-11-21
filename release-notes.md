@@ -19,6 +19,7 @@
 - **恢复被删资产**：红队技能库扩到 **40 个**（原作者 23 个原文 + 从社区/满血版吸纳的 17 个：AD、云与 K8s、C2 基建、供应链、社工/移动端、OOB 验证、OpSec、得分覆盖等），提示词中/英/历史三份原样保留，运行槽继续注入新版中文稿（25,727 字节，`[OPERATION: STABLE]`）。
 - **发布元数据全部指向本仓库**：`repository` / `homepage` / `bugs` / `dsh.install` / `lib/update.js` 的 `REPO` / `client.js` 欢迎页 / 红队面板默认仓库 / `release.yml` 发版门 / 三语 README 安装链接。
 - **署名更正**：`LICENSE` / `NOTICE` 补回原作者 YuJunZhiXue，保留上游 HunYiSage / HandlerOne01 的版权行；`LICENSE-COMMERCIAL.md` 注明本续作不代理商业授权。
+- **真实 Linux 宿主补锚**：#35 沙箱升级的拒绝分支在 0.2.2 实际安装里是 `SandboxEscalationError` 三行形态（`cancelled` 还多了 `throwIfAborted()`），补上该候选后可在真实宿主命中；#88 依赖 #87 的注入产物，需先应用 #87 才会成立。
 - **验证**：对 0.2.2-rc.5 官方包闭包（325 个包）跑锚点体检，12 条死锚清零、漂移 0；再用「备份 → 应用 → 二次应用 → 回滚」全流程验证：应用 57+5 条、二次应用 0 文件漂移、回滚后 16,973 个文件逐字节一致；对真实桌面宿主（0.2.2-rc.1，45 个内置包）同样跑通，回滚 0 不一致；11 个单测全绿。
 
 ## English

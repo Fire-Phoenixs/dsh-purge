@@ -99,10 +99,22 @@ async function main() {
     } else {
       console.log("  ⚠ 未定位 shim 目录，跳过注入");
     }
+    // 语法自检：替换文本写坏（少写一个右花括号之类）时，宿主下次启动会直接
+    // `failed to import: SyntaxError`，用户连界面都打不开。这里在收尾前拦住。
+    let syntaxProblems = [];
+    for (const h of hosts) {
+      try { syntaxProblems.push(...core.checkPatchedSyntax(h.aiBase)); } catch { /* 自检失败不阻断主流程 */ }
+    }
+    if (syntaxProblems.length > 0) {
+      console.log("");
+      console.log(`⚠ 语法自检失败 ${syntaxProblems.length} 个文件 / ${syntaxProblems.length} patched file(s) fail to parse:`);
+      for (const p of syntaxProblems.slice(0, 10)) console.log(`  ${p.file}\n    ${p.error}`);
+      console.log("  → 建议先执行 dsh-purge --revert 还原，再把这个补丁报给维护者");
+    }
     const failed = core.summarizeApplyReport(report).failed || [];
     console.log("");
-    if (failed.length > 0) {
-      console.log(`✗ 完成但有 ${failed.length} 个补丁失败 / finished with ${failed.length} failed patch(es)`);
+    if (failed.length > 0 || syntaxProblems.length > 0) {
+      if (failed.length > 0) console.log(`✗ 完成但有 ${failed.length} 个补丁失败 / finished with ${failed.length} failed patch(es)`);
       process.exit(1);
     }
     // 面板点应用会打戳；CLI 也要打，否则下次启动 settle 以为没对齐又重打一遍（#202）。
