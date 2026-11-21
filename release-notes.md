@@ -1,3 +1,23 @@
+# 1.2.1
+
+## 中文
+
+- 修复在 **Linux 宿主实机**（Ubuntu + DSH 0.2.2-rc.5，npm 全局安装到 `/usr/lib`）暴露的三个问题：
+  - **写入丢可执行位（致命）**：注入 shim 时写临时文件再 rename 不继承 mode，`dsh/lib/bin.js` 从 755 变 644，`systemd` 重启后 `/usr/bin/dsh` 直接 `Permission denied`、DSH Web 起不来；备份文件同样丢 mode，导致 Revert 还原成不可执行。现在写入与备份/还原统一继承原权限。
+  - **#35 补丁少写一个右花括号**：写进 `dsh-sandbox/lib/index.js` 后整文件语法错误，宿主以 `failed to import: SyntaxError` 静默废掉 bash-sandbox / fs-sandbox / permission-presets / ptc-runtime 四个插件。已修，并用真实宿主文件验证补丁产物语法。
+  - **新增补丁语法自检**：Apply 结束后对含 `[dsh-purge]` 标记的 `.js`/`.mjs` 逐个 `node --check`，解析失败即报出并以非零码退出；受限环境 spawn 被拒视为「无法验证」，不误报。
+- `#35` 的真实宿主锚点形态（`SandboxEscalationError` + `throwIfAborted`）补进候选表；`#88` 依赖 `#87` 的注入产物，先应用 `#87` 才会成立。
+- 新增测试 `test/mode-preserve.test.js`（三条写入路径的权限继承 + 备份/还原不改权限）。
+
+## English
+
+- Fixes three issues found on a **real Linux host** (Ubuntu + DSH 0.2.2-rc.5 installed globally under `/usr/lib`):
+  - **Writes dropped the executable bit (fatal)**: the shim writer renamed a temp file into place without inheriting the mode, turning `dsh/lib/bin.js` from 755 into 644; after a `systemd` restart `/usr/bin/dsh` failed with `Permission denied` and DSH Web would not start. Backups lost the mode too, so Revert restored a non-executable launcher. Writes, backups and restores now all inherit the original mode.
+  - **#35 replacement missed a closing brace**: once written into `dsh-sandbox/lib/index.js` the whole file failed to parse, and the host silently dropped bash-sandbox / fs-sandbox / permission-presets / ptc-runtime with `failed to import: SyntaxError`. Fixed and verified against the real host file with `node --check`.
+  - **New post-Apply syntax self-check**: every patched `.js`/`.mjs` carrying a `[dsh-purge]` marker is checked with `node --check`; a failure is reported and exits non-zero. A spawn failure in restricted environments counts as "unverified", not as an error.
+- The real-host anchor form for `#35` (`SandboxEscalationError` + `throwIfAborted`) is now a candidate; `#88` depends on `#87`'s injected code, so `#87` must apply first.
+- New test `test/mode-preserve.test.js` (mode inheritance on three write paths, plus backup/restore).
+
 # 1.2.0
 
 ## 中文
