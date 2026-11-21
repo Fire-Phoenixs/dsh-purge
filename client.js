@@ -3403,15 +3403,20 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 				}
 				let cancelled = false;
 				const tick = () => {
+					// 页面在后台时不探测：轮询只用来刷新按钮可用性，隐藏时没人看。
+					if (typeof document !== "undefined" && document.hidden) return;
 					apiJson("/dsh-purge/continue?sessionId=" + encodeURIComponent(sessionId))
 						.then((data) => { if (!cancelled && data && data.ok) setInfo(data); })
 						.catch(() => {});
 				};
+				const onVisible = () => { if (typeof document === "undefined" || !document.hidden) tick(); };
 				tick();
-				const timer = window.setInterval(tick, 1200);
+				const timer = window.setInterval(tick, 3000);
+				if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
 				return () => {
 					cancelled = true;
 					window.clearInterval(timer);
+					if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
 				};
 			}, [sessionId]);
 
@@ -3682,22 +3687,63 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 		function installRewindWatch(ctx) {
 			const sessions = ctx.sessions;
 			if (!sessions) return () => {};
-			const tick = async () => {
+			/* 这条监视原本是 setInterval(1200)：整页生命周期里每秒打一次
+			 * /dsh-purge/rewind，页面切到后台也照打。改成「空闲指数退避 + 后台停摆 +
+			 * 回到前台立刻补一次」：刚发生回退时仍是 1.2s 的灵敏度，静默一分钟左右
+			 * 会退到 10s 一次，后台标签页基本不打。 */
+			const FAST_MS = 1200;
+			const SLOW_MS = 10000;
+			let stopped = false;
+			let handle = null;
+			let idleTicks = 0;
+			const nextDelay = () => (idleTicks <= 0 ? FAST_MS : Math.min(SLOW_MS, Math.round(FAST_MS * Math.pow(1.6, idleTicks))));
+			const schedule = () => {
+				if (stopped) return;
+				handle = window.setTimeout(run, nextDelay());
+			};
+			const run = async () => {
+				if (stopped) return;
+				handle = null;
+				if (typeof document !== "undefined" && document.hidden) {
+					idleTicks = Math.min(idleTicks + 1, 12);
+					schedule();
+					return;
+				}
+				let changed = false;
 				try {
 					const data = await apiJson("/dsh-purge/rewind");
-					if (!data || !data.sessionId || !data.at || data.at <= rewindSeenAt) return;
-					rewindSeenAt = data.at;
-					const current = currentSessionId(sessions);
-					if (current && current !== data.parentId) return;
-					const text = isPluginDraft(data.text) ? "" : (data.text || "");
-					armComposerFill(data.sessionId, text);
-					scheduleComposerFill(data.sessionId, text);
-					await openRewoundSession(sessions, data.sessionId);
-					scheduleComposerFill(data.sessionId, text);
+					if (data && data.sessionId && data.at && data.at > rewindSeenAt) {
+						rewindSeenAt = data.at;
+						const current = currentSessionId(sessions);
+						if (!current || current === data.parentId) {
+							changed = true;
+							const text = isPluginDraft(data.text) ? "" : (data.text || "");
+							armComposerFill(data.sessionId, text);
+							scheduleComposerFill(data.sessionId, text);
+							await openRewoundSession(sessions, data.sessionId);
+							scheduleComposerFill(data.sessionId, text);
+						}
+					}
 				} catch { /* ignore */ }
+				if (stopped) return;
+				idleTicks = changed ? 0 : Math.min(idleTicks + 1, 12);
+				schedule();
 			};
-			const timer = window.setInterval(tick, 1200);
-			return () => window.clearInterval(timer);
+			const onVisible = () => {
+				if (typeof document !== "undefined" && document.hidden) return;
+				idleTicks = 0;
+				if (handle !== null) window.clearTimeout(handle);
+				handle = null;
+				run();
+			};
+			if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
+			schedule();
+			return () => {
+				stopped = true;
+				if (handle !== null) window.clearTimeout(handle);
+				handle = null;
+				if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
+			};
 		}
 
 		/* __DSH_PURGE_DRILL_BEGIN__ */

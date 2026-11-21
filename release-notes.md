@@ -1,3 +1,15 @@
+# 1.2.2
+
+## 中文
+
+- 修掉客户端两条常驻轮询：`installRewindWatch` 原来用 `setInterval(1200)` 在整页生命周期里每秒打一次 `/dsh-purge/rewind`（实机实测 3 分钟 122 次），页面切到后台也照打。改为**空闲指数退避（1.2s → 10s 封顶）+ 后台停摆 + 回到前台立刻补一次**；`ContinueButton` 的 `/dsh-purge/continue` 探测从 1.2s 放宽到 3s，同样后台不轮询。
+- 行为不变：发生回退时（含另一个标签页触发的）仍会在下一个快速周期内打开新会话并把原句填回输入框。
+
+## English
+
+- Fixes two always-on client pollers: `installRewindWatch` used `setInterval(1200)`, hitting `/dsh-purge/rewind` every second for the whole page lifetime (122 requests in 3 minutes measured on a real host), including while the tab was in the background. It now backs off exponentially when idle (1.2s → 10s cap), stops while hidden, and probes immediately when the tab becomes visible again; the `/dsh-purge/continue` probe in `ContinueButton` moved from 1.2s to 3s with the same hidden-tab guard.
+- Behaviour is unchanged: a rewind (including one triggered from another tab) is still picked up on the next fast tick and reopens the session with the original line restored to the composer.
+
 # 1.2.1
 
 ## 中文
